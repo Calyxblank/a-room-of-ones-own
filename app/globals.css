@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#__next, body > div {
+  width: 100%;
+  height: 100%;
+}
+
+/* Win95 utility classes */
+.win95-raised {
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+}
+
+.win95-sunken {
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #dfdfdf;
+}
+
+.win95-btn {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #404040 #404040 #ffffff;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  padding: 3px 8px;
+  color: #000;
+}
+
+.win95-btn:active {
+  border-color: #404040 #ffffff #ffffff #404040;
+}
+
+/* Scrollbar - Win95 style */
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: #c0c0c0; border: 1px solid #808080; }
+::-webkit-scrollbar-thumb { background: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; }
+::-webkit-scrollbar-corner { background: #c0c0c0; }
+::-webkit-scrollbar-button { background: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; height: 14px; width: 14px; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.panel-appear {
+  animation: fadeIn 0.15s ease-out;
+}
