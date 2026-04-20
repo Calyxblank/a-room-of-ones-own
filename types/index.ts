@@ -1,4 +1,4 @@
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
+export type TimeOfDay = 'dawn' | 'morning' | 'afternoon' | 'night';
 export type ActivePanel = null | 'turntable' | 'window' | 'desk';
 
 export interface ChatMessage {

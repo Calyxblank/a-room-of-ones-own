@@ -15,10 +15,10 @@ const MOCK_TRACKS: Track[] = [
 ];
 
 const PLAYLISTS: Record<TimeOfDay, { name: string; emoji: string; description: string; tracks: Track[] }> = {
-  morning: { name: 'Rise & Shine', emoji: '🌅', description: 'Energetic start to your day', tracks: MOCK_TRACKS.filter(t => ['1', '3', '8'].includes(t.id)) },
-  afternoon: { name: 'Afternoon Focus', emoji: '☀️', description: 'Deep work vibes', tracks: MOCK_TRACKS.filter(t => ['4', '6', '7'].includes(t.id)) },
-  evening: { name: 'Golden Hour', emoji: '🌇', description: 'Wind down with warmth', tracks: MOCK_TRACKS.filter(t => ['2', '5', '8'].includes(t.id)) },
-  night: { name: 'Midnight Sessions', emoji: '🌙', description: 'Chill late-night mood', tracks: MOCK_TRACKS.filter(t => ['1', '5', '7'].includes(t.id)) },
+  dawn:      { name: 'Golden Drift',      emoji: '🌄', description: 'Soft transitions for the threshold hour', tracks: MOCK_TRACKS.filter(t => ['2', '5', '6'].includes(t.id)) },
+  morning:   { name: 'Sage & Slow',       emoji: '🌿', description: 'Calm, fresh start to the day',           tracks: MOCK_TRACKS.filter(t => ['1', '3', '8'].includes(t.id)) },
+  afternoon: { name: 'Blush Hours',       emoji: '🌸', description: 'Warm focus in rosy light',              tracks: MOCK_TRACKS.filter(t => ['4', '6', '7'].includes(t.id)) },
+  night:     { name: 'Midnight Amber',    emoji: '🌑', description: 'Chill amber glow late-night mood',      tracks: MOCK_TRACKS.filter(t => ['1', '5', '7'].includes(t.id)) },
 };
 
 function getUsername(): string {

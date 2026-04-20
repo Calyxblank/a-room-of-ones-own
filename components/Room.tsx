@@ -27,6 +27,7 @@ function compressImage(dataUrl: string, maxPx = 400): Promise<string> {
 export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: RoomProps) {
   const isNight = timeOfDay === 'night';
   const isMorning = timeOfDay === 'morning';
+  const isDawn = timeOfDay === 'dawn';
 
   // Photo frames state
   const [photos, setPhotos] = useState<Record<number, RoomPhoto>>({});
@@ -109,10 +110,10 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
         bottom: '2%',
         height: '28%',
         background: isNight
-          ? 'radial-gradient(ellipse at center, #2a1a3a 0%, #1a0f2a 60%, #12091a 100%)'
+          ? 'radial-gradient(ellipse at center, #2a1200 0%, #1a0a00 60%, #100600 100%)'
           : 'radial-gradient(ellipse at center, #c0392b 0%, #922b21 40%, #7b241c 60%, #6e2c0e 100%)',
         borderRadius: '8px',
-        border: `2px solid ${isNight ? '#3a2a4a' : '#922b21'}`,
+        border: `2px solid ${isNight ? '#3a1800' : '#922b21'}`,
         boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
         transition: reduceAnimations ? 'none' : 'background 2s',
       }}>
@@ -120,14 +121,14 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
         <div style={{
           position: 'absolute',
           inset: '10%',
-          border: `2px solid ${isNight ? '#4a3a5a' : '#e74c3c'}`,
+          border: `2px solid ${isNight ? '#5a2800' : '#e74c3c'}`,
           borderRadius: '4px',
           opacity: 0.5,
         }} />
         <div style={{
           position: 'absolute',
           inset: '22%',
-          border: `2px solid ${isNight ? '#4a3a5a' : '#e74c3c'}`,
+          border: `2px solid ${isNight ? '#5a2800' : '#e74c3c'}`,
           borderRadius: '4px',
           opacity: 0.3,
         }} />
@@ -160,15 +161,16 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
                   position: 'absolute',
                   left: `${10 + i * 12}%`, top: `${8 + (i % 3) * 20}%`,
                   width: `${1 + (i % 2)}px`, height: `${1 + (i % 2)}px`,
-                  borderRadius: '50%', background: 'white',
+                  borderRadius: '50%', background: 'rgba(255,200,120,0.8)',
                   opacity: 0.8,
                 }} />
               ))}
+              {/* Amber moon */}
               <div style={{
                 position: 'absolute', top: '15%', right: '20%',
                 width: '14px', height: '14px',
-                borderRadius: '50%', background: '#f0e68c',
-                boxShadow: '0 0 8px rgba(240,230,140,0.6)',
+                borderRadius: '50%', background: '#c87a00',
+                boxShadow: '0 0 10px rgba(200,120,0,0.7)',
               }} />
             </>
           )}
@@ -176,12 +178,14 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
             <>
               <div style={{
                 position: 'absolute',
-                top: isMorning ? '55%' : '20%',
-                left: isMorning ? '20%' : '55%',
+                top: isMorning ? '55%' : isDawn ? '65%' : '20%',
+                left: isMorning ? '20%' : isDawn ? '25%' : '55%',
                 width: '20px', height: '20px',
                 borderRadius: '50%',
-                background: timeOfDay === 'evening' ? '#e74c3c' : '#ffd700',
-                boxShadow: `0 0 12px ${timeOfDay === 'evening' ? 'rgba(231,76,60,0.6)' : 'rgba(255,215,0,0.5)'}`,
+                background: isDawn ? '#ff8c50' : timeOfDay === 'afternoon' ? '#f4a0b4' : '#ffd700',
+                boxShadow: isDawn
+                  ? '0 0 14px rgba(255,140,80,0.65)'
+                  : `0 0 12px rgba(255,215,0,0.5)`,
               }} />
               <div style={{ position: 'absolute', bottom: '20%', left: '10%', right: '5%', height: '30%', background: 'rgba(34,139,34,0.4)', borderRadius: '40% 40% 0 0' }} />
             </>
@@ -195,13 +199,13 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
         {/* Curtains */}
         <div style={{
           position: 'absolute', top: '-4px', left: '-6px', bottom: '-4px', width: '22%',
-          background: isNight ? '#3d1f5e' : '#c0392b',
+          background: isNight ? '#2a1500' : isDawn ? '#c06030' : timeOfDay === 'morning' ? '#6b8f5a' : '#c06070',
           borderRadius: '0 0 50% 0',
           opacity: 0.85,
         }} />
         <div style={{
           position: 'absolute', top: '-4px', right: '-6px', bottom: '-4px', width: '22%',
-          background: isNight ? '#3d1f5e' : '#c0392b',
+          background: isNight ? '#2a1500' : isDawn ? '#c06030' : timeOfDay === 'morning' ? '#6b8f5a' : '#c06070',
           borderRadius: '0 0 0 50%',
           opacity: 0.85,
         }} />

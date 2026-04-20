@@ -3,53 +3,58 @@ import { useState, useEffect } from 'react';
 import type { TimeOfDay, TimeTheme } from '../types';
 
 const themes: Record<TimeOfDay, TimeTheme> = {
+  // 5–7 AM and 5–7 PM — Dawn Light: warm peach-gold, transitional
+  dawn: {
+    wallColor: '#f5d4a8',
+    floorColor: '#b8895a',
+    skyTop: '#e8956d',
+    skyBottom: '#ffd4a0',
+    overlayColor: 'rgba(220, 120, 40, 0.13)',
+    ambientLight: 'rgba(240, 160, 80, 0.22)',
+    label: 'Dawn',
+    icon: '🌄',
+  },
+  // 7 AM–noon — Sage Green: calm, fresh, verdant
   morning: {
-    wallColor: '#f5e6c8',
-    floorColor: '#c4956a',
-    skyTop: '#87ceeb',
-    skyBottom: '#ffd89b',
-    overlayColor: 'rgba(255, 200, 100, 0.12)',
-    ambientLight: 'rgba(255, 220, 150, 0.2)',
+    wallColor: '#c8d5b9',
+    floorColor: '#8a9e7a',
+    skyTop: '#9dc8b0',
+    skyBottom: '#d4ecd4',
+    overlayColor: 'rgba(100, 150, 90, 0.08)',
+    ambientLight: 'rgba(140, 190, 130, 0.18)',
     label: 'Morning',
-    icon: '🌅',
+    icon: '🌿',
   },
+  // Noon–5 PM — Blush Pink: soft, warm, focused
   afternoon: {
-    wallColor: '#e8d5b7',
-    floorColor: '#a0785a',
-    skyTop: '#4fc3f7',
-    skyBottom: '#b3e5fc',
-    overlayColor: 'rgba(255, 255, 255, 0.05)',
-    ambientLight: 'rgba(255, 255, 200, 0.1)',
+    wallColor: '#e8c4c8',
+    floorColor: '#c48a8a',
+    skyTop: '#c9a8c8',
+    skyBottom: '#f5d4dc',
+    overlayColor: 'rgba(210, 130, 140, 0.10)',
+    ambientLight: 'rgba(240, 170, 180, 0.15)',
     label: 'Afternoon',
-    icon: '☀️',
+    icon: '🌸',
   },
-  evening: {
-    wallColor: '#b07d5e',
-    floorColor: '#7a4a2a',
-    skyTop: '#c0392b',
-    skyBottom: '#e67e22',
-    overlayColor: 'rgba(255, 100, 50, 0.18)',
-    ambientLight: 'rgba(200, 80, 20, 0.15)',
-    label: 'Evening',
-    icon: '🌇',
-  },
+  // 7 PM–5 AM — Midnight Amber: deep dark warmth, amber glow
   night: {
-    wallColor: '#1e1e2e',
-    floorColor: '#12121f',
-    skyTop: '#0d0d1a',
-    skyBottom: '#1a1a3e',
-    overlayColor: 'rgba(10, 10, 60, 0.5)',
-    ambientLight: 'rgba(30, 50, 120, 0.3)',
+    wallColor: '#1a0e00',
+    floorColor: '#0e0800',
+    skyTop: '#100900',
+    skyBottom: '#1e1200',
+    overlayColor: 'rgba(70, 40, 0, 0.55)',
+    ambientLight: 'rgba(110, 68, 0, 0.28)',
     label: 'Night',
-    icon: '🌙',
+    icon: '🌑',
   },
 };
 
 function getTimeOfDay(hour: number): TimeOfDay {
-  if (hour >= 6 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
-  return 'night';
+  if (hour === 5 || hour === 6)  return 'dawn';
+  if (hour >= 7 && hour < 12)   return 'morning';
+  if (hour >= 12 && hour < 17)  return 'afternoon';
+  if (hour === 17 || hour === 18) return 'dawn';
+  return 'night'; // 19–4
 }
 
 export function useTimeOfDay() {
