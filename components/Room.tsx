@@ -1,6 +1,6 @@
 'use client';
-import React from 'react';
-import type { TimeTheme, TimeOfDay, ActivePanel } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import type { TimeTheme, TimeOfDay, ActivePanel, RoomPhoto } from '../types';
 
 interface RoomProps {
   theme: TimeTheme;
@@ -9,9 +9,69 @@ interface RoomProps {
   reduceAnimations: boolean;
 }
 
+function compressImage(dataUrl: string, maxPx = 400): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(maxPx / img.width, maxPx / img.height, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = dataUrl;
+  });
+}
+
 export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: RoomProps) {
   const isNight = timeOfDay === 'night';
   const isMorning = timeOfDay === 'morning';
+
+  // Photo frames state
+  const [photos, setPhotos] = useState<Record<number, RoomPhoto>>({});
+  const fileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+
+  useEffect(() => {
+    fetch('/api/photos')
+      .then(r => r.json())
+      .then(data => setPhotos(data.photos ?? {}))
+      .catch(() => {});
+    // Poll every 30s so others' uploads appear
+    const id = setInterval(() => {
+      fetch('/api/photos')
+        .then(r => r.json())
+        .then(data => setPhotos(data.photos ?? {}))
+        .catch(() => {});
+    }, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handlePhotoUpload = async (frame: number, file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const raw = e.target?.result as string;
+      const compressed = await compressImage(raw);
+      const res = await fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame, dataUrl: compressed }),
+      });
+      if (res.ok) {
+        setPhotos(prev => ({ ...prev, [frame]: { id: String(Date.now()), dataUrl: compressed, frame, uploadedAt: Date.now() } }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = async (frame: number) => {
+    await fetch('/api/photos', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ frame }),
+    });
+    setPhotos(prev => { const next = { ...prev }; delete next[frame]; return next; });
+  };
 
   return (
     <div
@@ -147,29 +207,62 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
         }} />
       </Hotspot>
 
-      {/* === WALL ART (decorative) === */}
-      <div style={{
-        position: 'absolute', left: '28%', top: '6%',
-        width: '10%', height: '16%',
-        border: '4px solid #5c3317',
-        background: '#8b7355',
-        boxShadow: '2px 2px 6px rgba(0,0,0,0.4)',
-      }}>
-        {/* Mountain painting */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #87ceeb 0%, #c8e6c9 100%)' }}>
-          <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '30%', height: '50%', background: '#6d4c41', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: '10%', width: '40%', height: '65%', background: '#8d6e63', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        </div>
-      </div>
-      <div style={{
-        position: 'absolute', left: '41%', top: '5%',
-        width: '7%', height: '12%',
-        border: '3px solid #5c3317',
-        background: isNight ? '#2a1f3a' : '#d4a574',
-        boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-      }}>
-        <div style={{ position: 'absolute', inset: '15%', background: isNight ? '#1a0f2e' : '#a0785a', borderRadius: '50% 50% 0 0' }} />
-      </div>
+      {/* === PHOTO FRAME 0 (wall, left-center) === */}
+      {fileRefs[0] && (
+        <input
+          ref={fileRefs[0]}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(0, f); e.target.value = ''; }}
+        />
+      )}
+      <PhotoFrame
+        photo={photos[0]}
+        style={{ position: 'absolute', left: '28%', top: '6%', width: '10%', height: '16%' }}
+        onUpload={() => fileRefs[0].current?.click()}
+        onRemove={() => removePhoto(0)}
+        reduceAnimations={reduceAnimations}
+        label="Photo Frame"
+      />
+
+      {/* === PHOTO FRAME 1 (wall, center) === */}
+      {fileRefs[1] && (
+        <input
+          ref={fileRefs[1]}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(1, f); e.target.value = ''; }}
+        />
+      )}
+      <PhotoFrame
+        photo={photos[1]}
+        style={{ position: 'absolute', left: '41%', top: '5%', width: '7%', height: '12%' }}
+        onUpload={() => fileRefs[1].current?.click()}
+        onRemove={() => removePhoto(1)}
+        reduceAnimations={reduceAnimations}
+        label="Photo Frame"
+      />
+
+      {/* === PHOTO FRAME 2 (wall, right of bed) === */}
+      {fileRefs[2] && (
+        <input
+          ref={fileRefs[2]}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(2, f); e.target.value = ''; }}
+        />
+      )}
+      <PhotoFrame
+        photo={photos[2]}
+        style={{ position: 'absolute', left: '51%', top: '7%', width: '8%', height: '14%' }}
+        onUpload={() => fileRefs[2].current?.click()}
+        onRemove={() => removePhoto(2)}
+        reduceAnimations={reduceAnimations}
+        label="Photo Frame"
+      />
 
       {/* === BOOKSHELF (decorative) === */}
       <div style={{
@@ -405,6 +498,101 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
           50% { opacity: 1; }
         }
       `}</style>
+    </div>
+  );
+}
+
+/* Interactive photo frame */
+function PhotoFrame({
+  photo,
+  style,
+  onUpload,
+  onRemove,
+  reduceAnimations,
+  label,
+}: {
+  photo?: RoomPhoto;
+  style: React.CSSProperties;
+  onUpload: () => void;
+  onRemove: () => void;
+  reduceAnimations: boolean;
+  label: string;
+}) {
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <div
+      style={{
+        ...style,
+        border: '4px solid #5c3317',
+        boxShadow: '2px 2px 6px rgba(0,0,0,0.5)',
+        background: '#8b7355',
+        cursor: 'pointer',
+        outline: hovered ? '3px solid rgba(255,255,0,0.8)' : '3px solid transparent',
+        outlineOffset: '2px',
+        transition: reduceAnimations ? 'none' : 'outline 0.15s',
+        zIndex: 5,
+        overflow: 'hidden',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onUpload}
+    >
+      {photo ? (
+        <>
+          <img
+            src={photo.dataUrl}
+            alt="Room photo"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+          {hovered && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: '4px',
+            }}>
+              <div style={{ fontSize: '10px', color: 'white', fontFamily: '"Press Start 2P", monospace', textAlign: 'center', lineHeight: '1.5' }}>
+                📷 Change
+              </div>
+              <button
+                onClick={e => { e.stopPropagation(); onRemove(); }}
+                style={{ fontSize: '9px', background: 'rgba(200,0,0,0.8)', border: '1px solid #ff4444', color: 'white', cursor: 'pointer', padding: '2px 5px' }}
+              >✕ Remove</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          background: hovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
+          transition: reduceAnimations ? 'none' : 'background 0.15s',
+          gap: '3px',
+        }}>
+          <div style={{ fontSize: '14px' }}>📷</div>
+          {hovered && (
+            <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.9)', fontFamily: '"Press Start 2P", monospace', textAlign: 'center', lineHeight: '1.6' }}>
+              Upload
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Hover label */}
+      {hovered && !photo && (
+        <div style={{
+          position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+          marginBottom: '4px', background: 'rgba(0,0,0,0.85)', color: 'white',
+          fontSize: '9px', fontFamily: '"Press Start 2P", monospace',
+          padding: '4px 8px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 100,
+          border: '1px solid rgba(255,255,255,0.3)',
+        }}>
+          🖼 {label}
+        </div>
+      )}
     </div>
   );
 }

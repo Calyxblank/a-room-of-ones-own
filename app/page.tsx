@@ -5,6 +5,7 @@ import Win95Window from '../components/Win95Window';
 import TurntablePanel from '../components/TurntablePanel';
 import WindowPanel from '../components/WindowPanel';
 import NotesCanvas from '../components/NotesCanvas';
+import ChatPanel from '../components/ChatPanel';
 import { useTimeOfDay } from '../hooks/useTimeOfDay';
 import { useDevicePerformance } from '../hooks/useDevicePerformance';
 import type { ActivePanel } from '../types';
@@ -13,6 +14,7 @@ export default function Page() {
   const { timeOfDay, theme, currentHour } = useTimeOfDay();
   const perfTier = useDevicePerformance();
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const openPanel = useCallback((panel: ActivePanel) => setActivePanel(panel), []);
   const closePanel = useCallback(() => setActivePanel(null), []);
@@ -233,6 +235,26 @@ export default function Page() {
 
         <div style={{ flex: 1 }} />
 
+        {/* Chat button */}
+        <button
+          onClick={() => setChatOpen(o => !o)}
+          style={{
+            height: '22px',
+            padding: '0 10px',
+            background: chatOpen ? 'rgba(0,0,128,0.15)' : '#c0c0c0',
+            border: '2px solid',
+            borderColor: chatOpen ? '#404040 #ffffff #ffffff #404040' : '#ffffff #404040 #404040 #ffffff',
+            cursor: 'pointer',
+            fontFamily: '"VT323", monospace',
+            fontSize: '14px',
+            display: 'flex', alignItems: 'center', gap: '4px',
+          }}
+        >
+          💬 Chat
+        </button>
+
+        <div style={{ width: '2px', height: '18px', background: '#808080', margin: '0 2px' }} />
+
         {/* Clock */}
         <div style={{
           padding: '0 8px',
@@ -247,6 +269,9 @@ export default function Page() {
           {theme.icon} {currentHour}:{new Date().getMinutes().toString().padStart(2, '0')}
         </div>
       </div>
+
+      {/* Chat panel — floats above taskbar */}
+      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
     </div>
   );
 }

@@ -1,6 +1,28 @@
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 export type ActivePanel = null | 'turntable' | 'window' | 'desk';
 
+export interface ChatMessage {
+  id: number;
+  text: string;
+  user: string;
+  timestamp: number;
+}
+
+export interface SharedPlaylist {
+  id: string;
+  spotifyId: string;
+  title: string;
+  addedBy: string;
+  addedAt: number;
+}
+
+export interface RoomPhoto {
+  id: string;
+  dataUrl: string;
+  frame: number;
+  uploadedAt: number;
+}
+
 export interface Note {
   id: string;
   content: string;
