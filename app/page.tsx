@@ -119,22 +119,6 @@ export default function Page() {
             reduceAnimations={perfTier === 'low'}
           />
 
-          {/* Help hint — bottom left */}
-          <div style={{
-            position: 'absolute',
-            bottom: '8px', left: '8px',
-            background: 'rgba(0,0,0,0.65)',
-            color: 'rgba(255,255,255,0.85)',
-            fontSize: '8px',
-            fontFamily: '"Press Start 2P", monospace',
-            padding: '5px 8px',
-            pointerEvents: 'none',
-            border: '1px solid rgba(255,255,255,0.2)',
-            lineHeight: '1.8',
-          }}>
-            Click objects to interact
-          </div>
-
           {/* Active panel */}
           {activePanel && (
             <div className="panel-appear">
