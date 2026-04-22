@@ -11,7 +11,7 @@ import { useDevicePerformance } from '../hooks/useDevicePerformance';
 import type { ActivePanel } from '../types';
 
 export default function Page() {
-  const { timeOfDay, theme, currentHour } = useTimeOfDay();
+  const { timeOfDay, theme, dsTheme, currentHour } = useTimeOfDay();
   const perfTier = useDevicePerformance();
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -21,52 +21,50 @@ export default function Page() {
 
   const panelConfigs = {
     turntable: { title: 'Turntable.exe', icon: '🎵', width: '680px', height: '520px', defaultX: 80, defaultY: 60 },
-    window:    { title: 'Window View', icon: '🪟', width: '520px', height: '500px', defaultX: 100, defaultY: 50 },
-    desk:      { title: 'Sticky Notes Workspace', icon: '📝', width: '780px', height: '560px', defaultX: 50, defaultY: 40 },
+    window:    { title: 'Window View',   icon: '🪟', width: '520px', height: '500px', defaultX: 100, defaultY: 50 },
+    desk:      { title: 'Sticky Notes',  icon: '📝', width: '780px', height: '560px', defaultX: 50, defaultY: 40 },
   };
 
+  const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+  const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
+
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: '#008080',
-        overflow: 'hidden',
-        fontFamily: '"Press Start 2P", monospace',
-      }}
-    >
+    <div style={{
+      width: '100vw', height: '100vh',
+      display: 'flex', flexDirection: 'column',
+      background: dsTheme.bg,
+      overflow: 'hidden',
+      fontFamily: '"Space Mono", "Press Start 2P", monospace',
+      transition: 'background 1.5s ease',
+    }}>
       {/* ── Win95 App Chrome ── */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-          margin: '8px',
-          border: '3px solid',
-          borderColor: '#ffffff #404040 #404040 #ffffff',
-          boxShadow: '2px 2px 0 #000000, inset 1px 1px 0 #dfdfdf',
-          background: 'rgba(192,192,192,0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          overflow: 'hidden',
-        }}
-      >
+      <div style={{
+        display: 'flex', flexDirection: 'column', flex: 1,
+        margin: '8px',
+        border: '2px solid', borderColor: bevel,
+        boxShadow: `3px 3px 0 ${dsTheme.chromeDark}`,
+        background: dsTheme.glass,
+        backdropFilter: dsTheme.blur,
+        WebkitBackdropFilter: dsTheme.blur,
+        overflow: 'hidden',
+        transition: 'border-color 1.5s, background 1.5s',
+      }}>
         {/* Title bar */}
-        <div
-          style={{
-            height: '28px',
-            background: 'linear-gradient(to right, #000080, #1084d0)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingLeft: '8px',
-            paddingRight: '6px',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'white', fontSize: '11px', fontFamily: '"Press Start 2P", monospace', textShadow: '1px 1px 0 #000040' }}>
+        <div style={{
+          height: '28px',
+          background: dsTheme.titleBar,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingLeft: '8px', paddingRight: '6px',
+          flexShrink: 0,
+          transition: 'background 1.5s',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            color: dsTheme.titleText, fontSize: '11px',
+            fontFamily: '"Space Mono", monospace', fontWeight: 700,
+            letterSpacing: '0.05em',
+            textShadow: '1px 1px 0 rgba(0,0,0,0.4)',
+          }}>
             <span style={{ fontSize: '14px' }}>🏠</span>
             <span>A Room of One&apos;s Own</span>
             <span style={{ fontSize: '9px', opacity: 0.7, marginLeft: '8px' }}>
@@ -77,11 +75,11 @@ export default function Page() {
             {['─', '□', '✕'].map((s, i) => (
               <div key={i} style={{
                 width: '18px', height: '18px',
-                background: 'rgba(192,192,192,0.85)',
-                border: '1px solid',
-                borderColor: '#ffffff #404040 #404040 #ffffff',
+                background: dsTheme.chromeLight,
+                border: '1px solid', borderColor: bevel,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '9px', fontWeight: 'bold', cursor: 'pointer',
+                color: dsTheme.chromeDark,
               }}>{s}</div>
             ))}
           </div>
@@ -90,22 +88,21 @@ export default function Page() {
         {/* Menu bar */}
         <div style={{
           height: '22px',
-          background: 'rgba(192,192,192,0.7)',
-          borderBottom: '1px solid #808080',
-          display: 'flex',
-          alignItems: 'center',
-          paddingLeft: '4px',
-          gap: '2px',
-          flexShrink: 0,
-          fontSize: '11px',
-          fontFamily: 'system-ui, sans-serif',
+          background: dsTheme.surfaceSolid,
+          borderBottom: `1px solid ${dsTheme.bevelDark}`,
+          display: 'flex', alignItems: 'center',
+          paddingLeft: '4px', gap: '2px',
+          flexShrink: 0, fontSize: '11px',
+          fontFamily: '"Space Mono", monospace',
+          transition: 'background 1.5s',
         }}>
           {['File', 'Edit', 'View', 'Room', 'Help'].map(m => (
             <button key={m} style={{
               padding: '0 8px', height: '20px',
               background: 'transparent', border: 'none',
               cursor: 'pointer', fontSize: '11px',
-              fontFamily: 'system-ui, sans-serif',
+              fontFamily: '"Space Mono", monospace',
+              color: dsTheme.text,
             }}>{m}</button>
           ))}
         </div>
@@ -119,7 +116,6 @@ export default function Page() {
             reduceAnimations={perfTier === 'low'}
           />
 
-          {/* Active panel */}
           {activePanel && (
             <div className="panel-appear">
               <Win95Window
@@ -131,10 +127,11 @@ export default function Page() {
                 height={panelConfigs[activePanel].height}
                 defaultX={panelConfigs[activePanel].defaultX}
                 defaultY={panelConfigs[activePanel].defaultY}
+                dsTheme={dsTheme}
               >
-                {activePanel === 'turntable' && <TurntablePanel timeOfDay={timeOfDay} />}
-                {activePanel === 'window'    && <WindowPanel timeOfDay={timeOfDay} theme={theme} />}
-                {activePanel === 'desk'      && <NotesCanvas perfTier={perfTier} />}
+                {activePanel === 'turntable' && <TurntablePanel timeOfDay={timeOfDay} dsTheme={dsTheme} />}
+                {activePanel === 'window'    && <WindowPanel timeOfDay={timeOfDay} theme={theme} dsTheme={dsTheme} />}
+                {activePanel === 'desk'      && <NotesCanvas perfTier={perfTier} dsTheme={dsTheme} />}
               </Win95Window>
             </div>
           )}
@@ -143,76 +140,60 @@ export default function Page() {
         {/* Status bar */}
         <div style={{
           height: '22px',
-          background: 'rgba(192,192,192,0.7)',
-          borderTop: '1px solid #808080',
-          display: 'flex',
-          alignItems: 'center',
-          paddingLeft: '8px',
-          gap: '16px',
-          flexShrink: 0,
-          fontSize: '12px',
-          fontFamily: '"VT323", monospace',
-          color: '#333',
+          background: dsTheme.surfaceSolid,
+          borderTop: `1px solid ${dsTheme.bevelDark}`,
+          display: 'flex', alignItems: 'center',
+          paddingLeft: '8px', gap: '16px',
+          flexShrink: 0, fontSize: '11px',
+          fontFamily: '"Space Mono", monospace',
+          color: dsTheme.textMuted,
+          transition: 'background 1.5s',
         }}>
-          <div style={{ borderRight: '1px solid #808080', paddingRight: '12px' }}>
+          <div style={{ borderRight: `1px solid ${dsTheme.bevelDark}`, paddingRight: '12px' }}>
             {theme.icon} {theme.label}
           </div>
-          <div style={{ borderRight: '1px solid #808080', paddingRight: '12px' }}>
+          <div style={{ borderRight: `1px solid ${dsTheme.bevelDark}`, paddingRight: '12px' }}>
             {activePanel ? `${panelConfigs[activePanel].icon} ${panelConfigs[activePanel].title}` : 'Ready'}
           </div>
-          <div>Performance: {perfTier}</div>
         </div>
       </div>
 
-      {/* Win95 Taskbar */}
+      {/* Taskbar */}
       <div style={{
-        height: '28px',
-        background: 'rgba(192,192,192,0.9)',
-        backdropFilter: 'blur(8px)',
-        borderTop: '2px solid #ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        paddingLeft: '4px',
-        paddingRight: '8px',
-        gap: '4px',
+        height: '30px',
+        background: dsTheme.surfaceSolid,
+        display: 'flex', alignItems: 'center',
+        paddingLeft: '4px', paddingRight: '8px', gap: '4px',
         flexShrink: 0,
         margin: '0 8px 8px',
-        border: '2px solid',
-        borderColor: '#ffffff #404040 #404040 #ffffff',
+        border: '2px solid', borderColor: bevel,
+        transition: 'background 1.5s, border-color 1.5s',
       }}>
         {/* Start button */}
         <button style={{
-          height: '22px',
-          padding: '0 8px',
-          background: '#c0c0c0',
-          border: '2px solid',
-          borderColor: '#ffffff #404040 #404040 #ffffff',
-          cursor: 'pointer',
-          fontSize: '10px',
-          fontFamily: '"Press Start 2P", monospace',
+          height: '22px', padding: '0 10px',
+          background: dsTheme.chromeLight,
+          border: '2px solid', borderColor: bevel,
+          cursor: 'pointer', fontSize: '10px',
+          fontFamily: '"Space Mono", monospace',
           display: 'flex', alignItems: 'center', gap: '4px',
-          fontWeight: 'bold',
+          fontWeight: 'bold', color: dsTheme.text,
         }}>
           🪟 Start
         </button>
 
-        <div style={{ width: '2px', height: '18px', background: '#808080', margin: '0 2px' }} />
+        <div style={{ width: '1px', height: '18px', background: dsTheme.bevelDark, margin: '0 2px' }} />
 
         {/* Active window button */}
         {activePanel && (
-          <button
-            onClick={closePanel}
-            style={{
-              height: '22px',
-              padding: '0 10px',
-              background: 'rgba(192,192,192,0.7)',
-              border: '2px solid',
-              borderColor: '#404040 #ffffff #ffffff #404040',
-              cursor: 'pointer',
-              fontFamily: '"VT323", monospace',
-              fontSize: '14px',
-            }}
-          >
+          <button onClick={closePanel} style={{
+            height: '22px', padding: '0 10px',
+            background: dsTheme.glass,
+            border: '2px solid', borderColor: bevelIn,
+            cursor: 'pointer',
+            fontFamily: '"Space Mono", monospace',
+            fontSize: '10px', color: dsTheme.text,
+          }}>
             {panelConfigs[activePanel].icon} {panelConfigs[activePanel].title}
           </button>
         )}
@@ -220,42 +201,36 @@ export default function Page() {
         <div style={{ flex: 1 }} />
 
         {/* Chat button */}
-        <button
-          onClick={() => setChatOpen(o => !o)}
-          style={{
-            height: '22px',
-            padding: '0 10px',
-            background: chatOpen ? 'rgba(0,0,128,0.15)' : '#c0c0c0',
-            border: '2px solid',
-            borderColor: chatOpen ? '#404040 #ffffff #ffffff #404040' : '#ffffff #404040 #404040 #ffffff',
-            cursor: 'pointer',
-            fontFamily: '"VT323", monospace',
-            fontSize: '14px',
-            display: 'flex', alignItems: 'center', gap: '4px',
-          }}
-        >
+        <button onClick={() => setChatOpen(o => !o)} style={{
+          height: '22px', padding: '0 10px',
+          background: chatOpen ? dsTheme.glass : dsTheme.chromeLight,
+          border: '2px solid',
+          borderColor: chatOpen ? bevelIn : bevel,
+          cursor: 'pointer',
+          fontFamily: '"Space Mono", monospace',
+          fontSize: '10px', color: dsTheme.text,
+          display: 'flex', alignItems: 'center', gap: '4px',
+        }}>
           💬 Chat
         </button>
 
-        <div style={{ width: '2px', height: '18px', background: '#808080', margin: '0 2px' }} />
+        <div style={{ width: '1px', height: '18px', background: dsTheme.bevelDark, margin: '0 2px' }} />
 
         {/* Clock */}
         <div style={{
           padding: '0 8px',
-          border: '1px solid',
-          borderColor: '#808080 #ffffff #ffffff #808080',
+          border: '1px solid', borderColor: bevelIn,
           height: '20px',
           display: 'flex', alignItems: 'center',
-          fontSize: '12px',
-          fontFamily: '"VT323", monospace',
-          color: '#000',
+          fontSize: '10px',
+          fontFamily: '"Space Mono", monospace',
+          color: dsTheme.text,
         }}>
           {theme.icon} {currentHour}:{new Date().getMinutes().toString().padStart(2, '0')}
         </div>
       </div>
 
-      {/* Chat panel — floats above taskbar */}
-      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
+      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} dsTheme={dsTheme} />}
     </div>
   );
 }

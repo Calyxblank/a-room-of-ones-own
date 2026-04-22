@@ -3,8 +3,9 @@ import React, { useCallback, useRef, useState } from 'react';
 import StickyNote from './StickyNote';
 import { useNotes } from '../hooks/useNotes';
 import type { PerformanceTier } from '../hooks/useDevicePerformance';
+import type { DSTheme } from '../lib/design-system';
 
-export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier }) {
+export default function NotesCanvas({ perfTier, dsTheme }: { perfTier: PerformanceTier; dsTheme: DSTheme }) {
   const {
     notes,
     connectingFrom,
@@ -61,14 +62,27 @@ export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier })
     });
   });
 
+  const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+  const notesBtnStyle: React.CSSProperties = {
+    padding: '3px 10px',
+    fontSize: '10px',
+    cursor: 'pointer',
+    background: dsTheme.chromeLight,
+    border: '2px solid',
+    borderColor: bevel,
+    fontFamily: '"Space Mono", monospace',
+    color: dsTheme.text,
+    whiteSpace: 'nowrap',
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Toolbar */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '6px',
         padding: '6px 10px', flexShrink: 0,
-        background: 'rgba(192,192,192,0.6)',
-        borderBottom: '1px solid #808080',
+        background: dsTheme.surfaceSolid,
+        borderBottom: `1px solid ${dsTheme.bevelDark}`,
         flexWrap: 'wrap',
       }}>
         <button
@@ -77,35 +91,35 @@ export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier })
             if (!rect) return;
             addNote(Math.random() * (rect.width - 200) + 20, Math.random() * (rect.height - 160) + 20);
           }}
-          style={toolBtnStyle}
+          style={notesBtnStyle}
           title="Add a new note"
         >
           ✚ Add Note
         </button>
 
         {connectingFrom ? (
-          <button onClick={cancelConnect} style={{ ...toolBtnStyle, background: 'rgba(200,0,0,0.15)', color: '#700', border: '1px solid #c00' }}>
+          <button onClick={cancelConnect} style={{ ...notesBtnStyle, background: dsTheme.glass, color: dsTheme.accent2 }}>
             ✕ Cancel Connect
           </button>
         ) : (
-          <span style={{ fontSize: '11px', color: '#555', padding: '0 4px' }}>
+          <span style={{ fontSize: '9px', color: dsTheme.textMuted, padding: '0 4px', fontFamily: '"Space Mono", monospace' }}>
             Click canvas to add • Double-click note to edit • ⇌ to connect
           </span>
         )}
 
         <div style={{ flex: 1 }} />
 
-        <button onClick={handleShare} style={toolBtnStyle} title="Copy shareable URL">
+        <button onClick={handleShare} style={notesBtnStyle} title="Copy shareable URL">
           🔗 Share
         </button>
         {shareMsg && (
-          <span style={{ color: '#006600', fontFamily: '"VT323", monospace', fontSize: '15px' }}>
+          <span style={{ color: dsTheme.accent4, fontFamily: '"Space Mono", monospace', fontSize: '10px' }}>
             {shareMsg}
           </span>
         )}
         <button
           onClick={clearAll}
-          style={{ ...toolBtnStyle, background: 'rgba(200,0,0,0.1)', color: '#700' }}
+          style={{ ...notesBtnStyle, color: dsTheme.accent2 }}
           title="Clear all notes"
         >
           🗑 Clear All
@@ -121,9 +135,9 @@ export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier })
           position: 'relative',
           overflow: 'hidden',
           cursor: connectingFrom ? 'crosshair' : 'cell',
-          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
+          backgroundImage: `radial-gradient(circle, ${dsTheme.bevelDark}33 1px, transparent 1px)`,
           backgroundSize: '20px 20px',
-          background: 'rgba(250,248,240,0.7)',
+          background: dsTheme.surface,
         }}
       >
         {/* Connection lines */}
@@ -132,14 +146,14 @@ export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier })
         >
           <defs>
             <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill="#000080" fillOpacity="0.6" />
+              <polygon points="0 0, 8 3, 0 6" fill={dsTheme.accent1} fillOpacity="0.6" />
             </marker>
           </defs>
           {connections.map((c, i) => (
             <line
               key={i}
               x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2}
-              stroke="#000080"
+              stroke={dsTheme.accent1}
               strokeWidth="1.5"
               strokeOpacity="0.5"
               strokeDasharray="6,3"
@@ -171,7 +185,7 @@ export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier })
             pointerEvents: 'none',
           }}>
             <div style={{ fontSize: '48px' }}>📝</div>
-            <div style={{ fontSize: '14px', fontFamily: '"Press Start 2P", monospace', color: '#888', textAlign: 'center', lineHeight: '1.8' }}>
+            <div style={{ fontSize: '11px', fontFamily: '"Space Mono", monospace', color: dsTheme.textMuted, textAlign: 'center', lineHeight: '1.8' }}>
               Click anywhere to<br />add your first note
             </div>
           </div>
@@ -181,15 +195,3 @@ export default function NotesCanvas({ perfTier }: { perfTier: PerformanceTier })
   );
 }
 
-const toolBtnStyle: React.CSSProperties = {
-  padding: '3px 10px',
-  fontSize: '11px',
-  cursor: 'pointer',
-  background: 'rgba(192,192,192,0.8)',
-  border: '2px solid',
-  borderColor: '#ffffff #404040 #404040 #ffffff',
-  boxShadow: '1px 1px 0 rgba(0,0,0,0.3)',
-  fontFamily: 'system-ui',
-  color: '#111',
-  whiteSpace: 'nowrap',
-};

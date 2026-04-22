@@ -9,12 +9,11 @@ interface RoomProps {
   reduceAnimations: boolean;
 }
 
-// morning image covers both morning and afternoon (same daylight)
 const ROOM_IMAGES: Record<TimeOfDay, string> = {
-  dawn:      '/room-dawn.jpg',
-  morning:   '/room-morning.jpg',
-  afternoon: '/room-morning.jpg',
-  night:     '/room-night.jpg',
+  dawn:      '/rooms/dawn.jpg',
+  morning:   '/rooms/morning.jpg',
+  afternoon: '/rooms/afternoon.jpg',
+  night:     '/rooms/night.jpg',
 };
 
 // Subtle overlay only for afternoon (same image as morning, slight blush tint to differentiate)

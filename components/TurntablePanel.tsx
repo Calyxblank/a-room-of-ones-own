@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Track, SharedPlaylist } from '../types';
 import type { TimeOfDay } from '../types';
+import type { DSTheme } from '../lib/design-system';
 
 const MOCK_TRACKS: Track[] = [
   { id: '1', title: 'Midnight City', artist: 'M83', album: 'Hurry Up, We\'re Dreaming', coverColor: '#6d28d9', duration: '4:03', genre: 'Electronic' },
@@ -26,7 +27,7 @@ function getUsername(): string {
   return localStorage.getItem('room-username') ?? 'Guest';
 }
 
-export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) {
+export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: TimeOfDay; dsTheme: DSTheme }) {
   const [playing, setPlaying] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'playlist' | 'all' | 'shared'>('playlist');
   const [progress, setProgress] = useState(0);
@@ -113,10 +114,12 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
 
   const currentTrack = MOCK_TRACKS.find(t => t.id === playing);
 
+  const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+
   return (
-    <div className="flex flex-col h-full" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="flex flex-col h-full" style={{ fontFamily: '"Space Mono", monospace', color: dsTheme.text }}>
       {/* Now Playing */}
-      <div className="flex items-center gap-3 p-3 flex-shrink-0" style={{ background: 'rgba(0,0,80,0.08)', borderBottom: '1px solid #808080' }}>
+      <div className="flex items-center gap-3 p-3 flex-shrink-0" style={{ background: dsTheme.glass, borderBottom: `1px solid ${dsTheme.bevelDark}` }}>
         <div className="relative flex-shrink-0" style={{ width: '64px', height: '64px' }}>
           <div style={{
             width: '64px', height: '64px',
@@ -140,17 +143,17 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
         <div className="flex-1 min-w-0">
           {currentTrack ? (
             <>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#000080', fontFamily: '"Press Start 2P", monospace', lineHeight: '1.4' }} className="truncate">
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: dsTheme.accent1, fontFamily: '"Space Mono", monospace', lineHeight: '1.4' }} className="truncate">
                 {currentTrack.title}
               </div>
-              <div style={{ fontSize: '11px', color: '#555' }}>{currentTrack.artist}</div>
-              <div style={{ fontSize: '10px', color: '#888' }}>{currentTrack.album}</div>
-              <div style={{ height: '4px', background: '#c0c0c0', marginTop: '6px', border: '1px inset #808080' }}>
-                <div style={{ height: '100%', width: `${progress}%`, background: '#000080', transition: 'width 0.2s' }} />
+              <div style={{ fontSize: '10px', color: dsTheme.text }}>{currentTrack.artist}</div>
+              <div style={{ fontSize: '9px', color: dsTheme.textMuted }}>{currentTrack.album}</div>
+              <div style={{ height: '4px', background: dsTheme.glass, marginTop: '6px', border: `1px solid ${dsTheme.bevelDark}` }}>
+                <div style={{ height: '100%', width: `${progress}%`, background: dsTheme.accent1, transition: 'width 0.2s' }} />
               </div>
             </>
           ) : (
-            <div style={{ color: '#555', fontFamily: '"VT323", monospace', fontSize: '16px' }}>
+            <div style={{ color: dsTheme.textMuted, fontFamily: '"Space Mono", monospace', fontSize: '11px' }}>
               {activeTab === 'shared' && activeShared ? `🎵 ${activeShared.title}` : 'Select a track to play'}
             </div>
           )}
@@ -164,7 +167,7 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-shrink-0" style={{ borderBottom: '1px solid #808080' }}>
+      <div className="flex flex-shrink-0" style={{ borderBottom: `1px solid ${dsTheme.bevelDark}` }}>
         {([
           { key: 'playlist', label: `${playlist.emoji} ${playlist.name}` },
           { key: 'all', label: '🎵 All Tracks' },
@@ -177,13 +180,13 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
               padding: '4px 10px',
               fontSize: '10px',
               border: 'none',
-              borderRight: '1px solid #808080',
-              background: activeTab === tab.key ? 'rgba(0,0,128,0.1)' : 'transparent',
+              borderRight: `1px solid ${dsTheme.bevelDark}`,
+              background: activeTab === tab.key ? dsTheme.glass : 'transparent',
               fontWeight: activeTab === tab.key ? 'bold' : 'normal',
               cursor: 'pointer',
-              color: activeTab === tab.key ? '#000080' : '#444',
-              fontFamily: 'system-ui',
-              borderBottom: activeTab === tab.key ? '2px solid #000080' : 'none',
+              color: activeTab === tab.key ? dsTheme.accent1 : dsTheme.textMuted,
+              fontFamily: '"Space Mono", monospace',
+              borderBottom: activeTab === tab.key ? `2px solid ${dsTheme.accent1}` : 'none',
               whiteSpace: 'nowrap',
             }}
           >{tab.label}</button>
@@ -194,12 +197,11 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
       {activeTab === 'shared' && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Add Playlist button + form */}
-          <div style={{ padding: '6px 8px', borderBottom: '1px solid #c0c0c0', flexShrink: 0, background: 'rgba(0,0,80,0.04)' }}>
+          <div style={{ padding: '6px 8px', borderBottom: `1px solid ${dsTheme.bevelDark}`, flexShrink: 0, background: dsTheme.glass }}>
             {!showAddForm ? (
               <button
-                className="win95-btn"
                 onClick={() => setShowAddForm(true)}
-                style={{ fontSize: '11px', padding: '3px 10px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                style={{ fontSize: '10px', padding: '3px 10px', display: 'flex', alignItems: 'center', gap: '5px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, cursor: 'pointer', fontFamily: '"Space Mono", monospace', color: dsTheme.text }}
               >
                 ➕ Add Spotify Playlist
               </button>
@@ -209,22 +211,22 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
                   placeholder="Spotify playlist URL"
                   value={urlInput}
                   onChange={e => setUrlInput(e.target.value)}
-                  style={{ fontSize: '11px', border: '1px inset #808080', padding: '3px 6px', width: '100%', background: 'white' }}
+                  style={{ fontSize: '10px', border: `1px solid ${dsTheme.bevelDark}`, padding: '3px 6px', width: '100%', background: dsTheme.surface, color: dsTheme.text, fontFamily: '"Space Mono", monospace', outline: 'none' }}
                   onKeyDown={e => { if (e.key === 'Enter') submitPlaylist(); }}
                 />
                 <input
                   placeholder="Name (optional)"
                   value={titleInput}
                   onChange={e => setTitleInput(e.target.value)}
-                  style={{ fontSize: '11px', border: '1px inset #808080', padding: '3px 6px', width: '100%', background: 'white' }}
+                  style={{ fontSize: '10px', border: `1px solid ${dsTheme.bevelDark}`, padding: '3px 6px', width: '100%', background: dsTheme.surface, color: dsTheme.text, fontFamily: '"Space Mono", monospace', outline: 'none' }}
                   onKeyDown={e => { if (e.key === 'Enter') submitPlaylist(); }}
                 />
-                {addError && <div style={{ fontSize: '10px', color: '#cc0000' }}>{addError}</div>}
+                {addError && <div style={{ fontSize: '10px', color: dsTheme.accent2 }}>{addError}</div>}
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <button className="win95-btn" onClick={submitPlaylist} disabled={adding || !urlInput.trim()} style={{ fontSize: '11px', flex: 1 }}>
+                  <button onClick={submitPlaylist} disabled={adding || !urlInput.trim()} style={{ fontSize: '10px', flex: 1, padding: '3px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, cursor: 'pointer', fontFamily: '"Space Mono", monospace', color: dsTheme.text, opacity: adding || !urlInput.trim() ? 0.5 : 1 }}>
                     {adding ? 'Adding…' : 'Add'}
                   </button>
-                  <button className="win95-btn" onClick={() => { setShowAddForm(false); setAddError(''); }} style={{ fontSize: '11px' }}>
+                  <button onClick={() => { setShowAddForm(false); setAddError(''); }} style={{ fontSize: '10px', padding: '3px 8px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, cursor: 'pointer', fontFamily: '"Space Mono", monospace', color: dsTheme.text }}>
                     Cancel
                   </button>
                 </div>
@@ -234,10 +236,10 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
 
           {/* Shared playlist list */}
           {sharedPlaylists.length === 0 ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#888', gap: '8px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: dsTheme.textMuted, gap: '8px' }}>
               <div style={{ fontSize: '28px' }}>🎵</div>
-              <div style={{ fontFamily: '"VT323", monospace', fontSize: '16px' }}>No shared playlists yet.</div>
-              <div style={{ fontSize: '10px', color: '#aaa' }}>Add a Spotify playlist for everyone!</div>
+              <div style={{ fontFamily: '"Space Mono", monospace', fontSize: '11px' }}>No shared playlists yet.</div>
+              <div style={{ fontSize: '9px', color: dsTheme.textMuted }}>Add a Spotify playlist for everyone!</div>
             </div>
           ) : (
             <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -249,29 +251,29 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
                     display: 'flex', flexDirection: 'column', gap: '2px',
                     padding: '8px 10px',
                     cursor: 'pointer',
-                    background: activeShared?.id === pl.id ? 'rgba(0,0,128,0.12)' : 'transparent',
-                    borderBottom: '1px solid rgba(128,128,128,0.2)',
+                    background: activeShared?.id === pl.id ? dsTheme.glass : 'transparent',
+                    borderBottom: `1px solid ${dsTheme.bevelDark}`,
                     transition: 'background 0.15s',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: activeShared?.id === pl.id ? '#000080' : '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: activeShared?.id === pl.id ? dsTheme.accent1 : dsTheme.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                       🎵 {pl.title}
                     </span>
                     <button
                       onClick={e => { e.stopPropagation(); removePlaylist(pl.id); }}
-                      style={{ fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#888', flexShrink: 0 }}
+                      style={{ fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', color: dsTheme.textMuted, flexShrink: 0 }}
                       title="Remove"
                     >✕</button>
                   </div>
-                  <div style={{ fontSize: '10px', color: '#666' }}>Added by {pl.addedBy}</div>
+                  <div style={{ fontSize: '9px', color: dsTheme.textMuted }}>Added by {pl.addedBy}</div>
                 </div>
               ))}
 
               {/* Spotify embed for selected playlist */}
               {activeShared && (
-                <div style={{ padding: '8px', borderTop: '1px solid #c0c0c0' }}>
-                  <div style={{ fontSize: '10px', color: '#555', marginBottom: '6px', fontFamily: '"Press Start 2P", monospace' }}>
+                <div style={{ padding: '8px', borderTop: `1px solid ${dsTheme.bevelDark}` }}>
+                  <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '6px', fontFamily: '"Space Mono", monospace' }}>
                     NOW PLAYING
                   </div>
                   <iframe
@@ -293,7 +295,7 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
       {activeTab !== 'shared' && (
         <>
           {activeTab === 'playlist' && (
-            <div style={{ padding: '6px 10px', fontSize: '11px', color: '#666', background: 'rgba(0,0,80,0.04)', flexShrink: 0, borderBottom: '1px solid #c0c0c0' }}>
+            <div style={{ padding: '6px 10px', fontSize: '10px', color: dsTheme.textMuted, background: dsTheme.glass, flexShrink: 0, borderBottom: `1px solid ${dsTheme.bevelDark}`, fontFamily: '"Space Mono", monospace' }}>
               {playlist.description}
             </div>
           )}
@@ -306,12 +308,10 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
                   display: 'flex', alignItems: 'center', gap: '10px',
                   padding: '8px 10px',
                   cursor: 'pointer',
-                  background: playing === track.id ? 'rgba(0,0,128,0.12)' : i % 2 === 0 ? 'rgba(255,255,255,0.4)' : 'transparent',
-                  borderBottom: '1px solid rgba(128,128,128,0.2)',
+                  background: playing === track.id ? dsTheme.glass : 'transparent',
+                  borderBottom: `1px solid ${dsTheme.bevelDark}`,
                   transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => { if (playing !== track.id) (e.currentTarget as HTMLDivElement).style.background = 'rgba(0,0,128,0.06)'; }}
-                onMouseLeave={e => { if (playing !== track.id) (e.currentTarget as HTMLDivElement).style.background = i % 2 === 0 ? 'rgba(255,255,255,0.4)' : 'transparent'; }}
               >
                 <div style={{
                   width: '40px', height: '40px', borderRadius: '4px',
@@ -323,14 +323,14 @@ export default function TurntablePanel({ timeOfDay }: { timeOfDay: TimeOfDay }) 
                   {playing === track.id ? '▶' : '🎵'}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '12px', fontWeight: playing === track.id ? 'bold' : 'normal', color: playing === track.id ? '#000080' : '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '11px', fontWeight: playing === track.id ? 'bold' : 'normal', color: playing === track.id ? dsTheme.accent1 : dsTheme.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Space Mono", monospace' }}>
                     {track.title}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#666' }}>{track.artist} · {track.album}</div>
+                  <div style={{ fontSize: '9px', color: dsTheme.textMuted }}>{track.artist} · {track.album}</div>
                 </div>
-                <div style={{ fontSize: '10px', color: '#888', flexShrink: 0 }}>
+                <div style={{ fontSize: '9px', color: dsTheme.textMuted, flexShrink: 0 }}>
                   <div>{track.duration}</div>
-                  <div style={{ color: '#aaa', fontSize: '9px' }}>{track.genre}</div>
+                  <div style={{ fontSize: '8px' }}>{track.genre}</div>
                 </div>
               </div>
             ))}

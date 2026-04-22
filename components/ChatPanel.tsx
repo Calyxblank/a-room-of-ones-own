@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { ChatMessage } from '../types';
+import type { DSTheme } from '../lib/design-system';
 
 function getOrCreateUsername(): string {
   if (typeof window === 'undefined') return 'Guest';
@@ -17,9 +18,10 @@ function formatTime(ts: number) {
 
 interface ChatPanelProps {
   onClose: () => void;
+  dsTheme: DSTheme;
 }
 
-export default function ChatPanel({ onClose }: ChatPanelProps) {
+export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [username, setUsername] = useState('Guest');
@@ -72,6 +74,9 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
     setEditingName(false);
   };
 
+  const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+  const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
+
   return (
     <div style={{
       position: 'fixed',
@@ -82,16 +87,17 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
       zIndex: 200,
       display: 'flex',
       flexDirection: 'column',
-      border: '3px solid',
-      borderColor: '#ffffff #404040 #404040 #ffffff',
-      boxShadow: '2px 2px 0 #000',
-      background: '#c0c0c0',
-      fontFamily: 'system-ui, sans-serif',
+      border: '2px solid',
+      borderColor: bevel,
+      boxShadow: `3px 3px 0 ${dsTheme.chromeDark}`,
+      background: dsTheme.surfaceSolid,
+      fontFamily: '"Space Mono", monospace',
+      transition: 'background 1.5s, border-color 1.5s',
     }}>
       {/* Title bar */}
       <div style={{
         height: '26px',
-        background: 'linear-gradient(to right, #000080, #1084d0)',
+        background: dsTheme.titleBar,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -99,11 +105,11 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
         paddingRight: '4px',
         flexShrink: 0,
       }}>
-        <div style={{ color: 'white', fontSize: '10px', fontFamily: '"Press Start 2P", monospace', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ color: dsTheme.titleText, fontSize: '10px', fontFamily: '"Space Mono", monospace', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700, textShadow: '1px 1px 0 rgba(0,0,0,0.4)' }}>
           💬 Chat
           <span style={{
             width: '7px', height: '7px', borderRadius: '50%',
-            background: online ? '#4ade80' : '#808080',
+            background: online ? '#4ade80' : dsTheme.textMuted,
             display: 'inline-block',
             boxShadow: online ? '0 0 4px #4ade80' : 'none',
           }} />
@@ -112,11 +118,12 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
           onClick={onClose}
           style={{
             width: '18px', height: '18px',
-            background: '#c0c0c0',
-            border: '1px solid',
-            borderColor: '#fff #404040 #404040 #fff',
-            fontSize: '10px', fontWeight: 'bold',
+            background: dsTheme.chromeLight,
+            border: '2px solid',
+            borderColor: bevel,
+            fontSize: '9px', fontWeight: 'bold',
             cursor: 'pointer', lineHeight: 1,
+            color: dsTheme.chromeDark,
           }}
         >✕</button>
       </div>
@@ -124,15 +131,16 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
       {/* Username bar */}
       <div style={{
         padding: '4px 6px',
-        borderBottom: '1px solid #808080',
-        fontSize: '11px',
+        borderBottom: `1px solid ${dsTheme.bevelDark}`,
+        fontSize: '10px',
         display: 'flex',
         alignItems: 'center',
         gap: '6px',
         flexShrink: 0,
-        background: 'rgba(255,255,255,0.3)',
+        background: dsTheme.glass,
+        fontFamily: '"Space Mono", monospace',
       }}>
-        <span style={{ color: '#555' }}>You:</span>
+        <span style={{ color: dsTheme.textMuted }}>You:</span>
         {editingName ? (
           <>
             <input
@@ -141,16 +149,15 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
               onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
               autoFocus
               maxLength={28}
-              style={{ flex: 1, fontSize: '11px', border: '1px inset #808080', padding: '1px 3px', background: 'white' }}
+              style={{ flex: 1, fontSize: '10px', border: `1px solid ${dsTheme.bevelDark}`, padding: '1px 3px', background: dsTheme.surface, color: dsTheme.text, fontFamily: '"Space Mono", monospace', outline: 'none' }}
             />
-            <button className="win95-btn" style={{ fontSize: '10px', padding: '1px 6px' }} onClick={saveName}>OK</button>
+            <button onClick={saveName} style={{ ...chatBtnStyle(dsTheme, bevel), fontSize: '9px', padding: '1px 6px' }}>OK</button>
           </>
         ) : (
           <>
-            <span style={{ fontWeight: 'bold', color: '#000080' }}>{username}</span>
+            <span style={{ fontWeight: 'bold', color: dsTheme.accent1 }}>{username}</span>
             <button
-              className="win95-btn"
-              style={{ fontSize: '9px', padding: '1px 5px', marginLeft: 'auto' }}
+              style={{ ...chatBtnStyle(dsTheme, bevel), fontSize: '9px', padding: '1px 5px', marginLeft: 'auto' }}
               onClick={() => { setNameInput(username); setEditingName(true); }}
             >Edit</button>
           </>
@@ -165,12 +172,12 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: '4px',
-        background: 'white',
-        border: '1px inset #808080',
+        background: dsTheme.surface,
+        border: `1px solid ${dsTheme.bevelDark}`,
         margin: '4px',
       }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#888', marginTop: '20px', fontFamily: '"VT323", monospace', fontSize: '16px' }}>
+          <div style={{ textAlign: 'center', color: dsTheme.textMuted, marginTop: '20px', fontFamily: '"Space Mono", monospace', fontSize: '11px' }}>
             No messages yet.<br />Say hello! 👋
           </div>
         )}
@@ -182,21 +189,20 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
               flexDirection: 'column',
               alignItems: isOwn ? 'flex-end' : 'flex-start',
             }}>
-              <div style={{ fontSize: '9px', color: '#888', marginBottom: '2px', paddingLeft: isOwn ? 0 : '2px', paddingRight: isOwn ? '2px' : 0 }}>
-                {!isOwn && <span style={{ fontWeight: 'bold', color: '#000080' }}>{m.user} · </span>}
+              <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '2px', paddingLeft: isOwn ? 0 : '2px', paddingRight: isOwn ? '2px' : 0, fontFamily: '"Space Mono", monospace' }}>
+                {!isOwn && <span style={{ fontWeight: 'bold', color: dsTheme.accent1 }}>{m.user} · </span>}
                 {formatTime(m.timestamp)}
               </div>
               <div style={{
                 maxWidth: '85%',
                 padding: '5px 8px',
-                background: isOwn ? '#000080' : '#e8e8e8',
-                color: isOwn ? 'white' : '#111',
-                fontSize: '12px',
-                border: isOwn
-                  ? '1px solid #00005a'
-                  : '1px solid #c0c0c0',
+                background: isOwn ? dsTheme.accent1 : dsTheme.glass,
+                color: isOwn ? dsTheme.titleText : dsTheme.text,
+                fontSize: '11px',
+                fontFamily: '"Space Mono", monospace',
+                border: `1px solid ${isOwn ? dsTheme.accent1 : dsTheme.bevelDark}`,
                 wordBreak: 'break-word',
-                lineHeight: '1.4',
+                lineHeight: '1.5',
               }}>
                 {m.text}
               </div>
@@ -222,22 +228,34 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
           maxLength={400}
           style={{
             flex: 1,
-            fontSize: '12px',
-            border: '1px inset #808080',
+            fontSize: '11px',
+            fontFamily: '"Space Mono", monospace',
+            border: `1px solid ${dsTheme.bevelDark}`,
             padding: '3px 6px',
-            background: 'white',
+            background: dsTheme.surface,
+            color: dsTheme.text,
             outline: 'none',
           }}
         />
         <button
-          className="win95-btn"
           onClick={send}
           disabled={!input.trim()}
-          style={{ fontSize: '11px', padding: '3px 10px', flexShrink: 0 }}
+          style={{ ...chatBtnStyle(dsTheme, bevel), fontSize: '10px', padding: '3px 10px', flexShrink: 0, opacity: input.trim() ? 1 : 0.5 }}
         >
           Send
         </button>
       </div>
     </div>
   );
+}
+
+function chatBtnStyle(dsTheme: DSTheme, bevel: string): React.CSSProperties {
+  return {
+    background: dsTheme.chromeLight,
+    border: '2px solid',
+    borderColor: bevel,
+    cursor: 'pointer',
+    fontFamily: '"Space Mono", monospace',
+    color: dsTheme.text,
+  };
 }

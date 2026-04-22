@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import type { TimeOfDay, TimeTheme } from '../types';
+import { DS_THEMES, type DSTheme } from '../lib/design-system';
 
 const themes: Record<TimeOfDay, TimeTheme> = {
-  // 5–7 AM and 5–7 PM — Dawn Light: warm peach-gold, transitional
   dawn: {
     wallColor: '#f5d4a8',
     floorColor: '#b8895a',
@@ -14,7 +14,6 @@ const themes: Record<TimeOfDay, TimeTheme> = {
     label: 'Dawn',
     icon: '🌄',
   },
-  // 7 AM–noon — Sage Green: calm, fresh, verdant
   morning: {
     wallColor: '#c8d5b9',
     floorColor: '#8a9e7a',
@@ -25,7 +24,6 @@ const themes: Record<TimeOfDay, TimeTheme> = {
     label: 'Morning',
     icon: '🌿',
   },
-  // Noon–5 PM — Blush Pink: soft, warm, focused
   afternoon: {
     wallColor: '#e8c4c8',
     floorColor: '#c48a8a',
@@ -36,7 +34,6 @@ const themes: Record<TimeOfDay, TimeTheme> = {
     label: 'Afternoon',
     icon: '🌸',
   },
-  // 7 PM–5 AM — Midnight Amber: deep dark warmth, amber glow
   night: {
     wallColor: '#1a0e00',
     floorColor: '#0e0800',
@@ -50,16 +47,17 @@ const themes: Record<TimeOfDay, TimeTheme> = {
 };
 
 function getTimeOfDay(hour: number): TimeOfDay {
-  if (hour === 5 || hour === 6)  return 'dawn';
-  if (hour >= 7 && hour < 12)   return 'morning';
-  if (hour >= 12 && hour < 17)  return 'afternoon';
+  if (hour === 5 || hour === 6)   return 'dawn';
+  if (hour >= 7 && hour < 12)    return 'morning';
+  if (hour >= 12 && hour < 17)   return 'afternoon';
   if (hour === 17 || hour === 18) return 'dawn';
-  return 'night'; // 19–4
+  return 'night';
 }
 
 export function useTimeOfDay() {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('afternoon');
   const [theme, setTheme] = useState<TimeTheme>(themes.afternoon);
+  const [dsTheme, setDsTheme] = useState<DSTheme>(DS_THEMES.afternoon);
   const [currentHour, setCurrentHour] = useState(12);
 
   useEffect(() => {
@@ -70,11 +68,12 @@ export function useTimeOfDay() {
       setCurrentHour(hour);
       setTimeOfDay(tod);
       setTheme(themes[tod]);
+      setDsTheme(DS_THEMES[tod]);
     };
     update();
     const interval = setInterval(update, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  return { timeOfDay, theme, currentHour };
+  return { timeOfDay, theme, dsTheme, currentHour };
 }

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useCallback } from 'react';
+import type { DSTheme } from '../lib/design-system';
 
 interface Win95WindowProps {
   title: string;
@@ -11,7 +12,7 @@ interface Win95WindowProps {
   defaultX?: number;
   defaultY?: number;
   className?: string;
-  fullscreenMobile?: boolean;
+  dsTheme: DSTheme;
 }
 
 export default function Win95Window({
@@ -24,7 +25,7 @@ export default function Win95Window({
   defaultX = 60,
   defaultY = 40,
   className = '',
-  fullscreenMobile = true,
+  dsTheme,
 }: Win95WindowProps) {
   const [pos, setPos] = useState({ x: defaultX, y: defaultY });
   const [dragging, setDragging] = useState(false);
@@ -52,80 +53,100 @@ export default function Win95Window({
     window.addEventListener('mouseup', onUp);
   }, [pos]);
 
+  const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+  const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
+
   return (
     <>
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-40"
-        style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)' }}
+        style={{ background: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(2px)' }}
         onClick={onClose}
       />
 
       {/* Window */}
       <div
         ref={winRef}
-        className={`fixed z-50 flex flex-col ${fullscreenMobile ? 'sm:w-auto sm:h-auto w-full h-full sm:rounded-none' : ''} ${className}`}
+        className={`fixed z-50 flex flex-col ${className}`}
         style={{
           width: `min(${width}, 96vw)`,
           height: `min(${height}, 90vh)`,
           left: window.innerWidth < 640 ? 0 : Math.max(0, Math.min(pos.x, window.innerWidth - 400)),
           top: window.innerWidth < 640 ? 0 : Math.max(0, Math.min(pos.y, window.innerHeight - 300)),
           cursor: dragging ? 'grabbing' : 'default',
-          /* Win95 glass border */
           border: '2px solid',
-          borderColor: '#ffffff #404040 #404040 #ffffff',
-          boxShadow: '2px 2px 0 #000000, inset 1px 1px 0 #dfdfdf',
-          background: 'rgba(192, 192, 192, 0.82)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          borderColor: bevel,
+          boxShadow: `3px 3px 0 ${dsTheme.chromeDark}`,
+          background: dsTheme.glass,
+          backdropFilter: dsTheme.blur,
+          WebkitBackdropFilter: dsTheme.blur,
         }}
       >
         {/* Title bar */}
         <div
-          className="flex items-center justify-between px-2 py-1 select-none flex-shrink-0"
+          className="flex items-center justify-between select-none flex-shrink-0"
           style={{
-            background: 'linear-gradient(to right, #000080, #1084d0)',
+            background: dsTheme.titleBar,
+            padding: '3px 6px',
             cursor: window.innerWidth >= 640 ? 'grab' : 'default',
-            minHeight: '28px',
+            minHeight: '26px',
           }}
           onMouseDown={onTitleMouseDown}
         >
-          <div className="flex items-center gap-1" style={{ color: 'white', fontSize: '12px', fontFamily: '"Press Start 2P", monospace', textShadow: '1px 1px 0 #000040' }}>
-            <span style={{ fontSize: '14px' }}>{icon}</span>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            color: dsTheme.titleText,
+            fontSize: '11px',
+            fontFamily: '"Space Mono", "Press Start 2P", monospace',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textShadow: '1px 1px 0 rgba(0,0,0,0.4)',
+          }}>
+            <span style={{ fontSize: '13px' }}>{icon}</span>
             <span className="truncate max-w-xs">{title}</span>
           </div>
-          <div className="flex gap-1">
-            <button
-              onClick={onClose}
-              style={{
-                width: '18px', height: '18px',
-                background: 'rgba(192,192,192,0.9)',
-                border: '1px solid',
-                borderColor: '#ffffff #404040 #404040 #ffffff',
-                fontSize: '10px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                flexShrink: 0,
-              }}
-            >✕</button>
+          <div style={{ display: 'flex', gap: '2px' }}>
+            {['□', '✕'].map((s, i) => (
+              <button
+                key={i}
+                onClick={i === 1 ? onClose : undefined}
+                style={{
+                  width: '18px', height: '16px',
+                  background: dsTheme.chromeLight,
+                  border: '2px solid',
+                  borderColor: bevel,
+                  fontSize: '9px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: dsTheme.chromeDark,
+                  fontWeight: 'bold',
+                }}
+              >{s}</button>
+            ))}
           </div>
         </div>
 
         {/* Menu bar */}
-        <div
-          className="flex items-center px-2 flex-shrink-0"
-          style={{
-            height: '22px',
-            background: 'rgba(192,192,192,0.7)',
-            borderBottom: '1px solid #808080',
-            fontSize: '11px',
-            fontFamily: 'system-ui, sans-serif',
-          }}
-        >
-          <button className="px-2 hover:bg-blue-700 hover:text-white rounded-none" style={{ padding: '0 6px', height: '20px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '11px' }}>File</button>
-          <button className="px-2 hover:bg-blue-700 hover:text-white" style={{ padding: '0 6px', height: '20px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '11px' }}>View</button>
-          <button className="px-2 hover:bg-blue-700 hover:text-white" style={{ padding: '0 6px', height: '20px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '11px' }}>Help</button>
+        <div style={{
+          height: '22px',
+          background: dsTheme.surfaceSolid,
+          borderBottom: `1px solid ${dsTheme.bevelDark}`,
+          display: 'flex', alignItems: 'center',
+          paddingLeft: '4px',
+          fontSize: '11px',
+          fontFamily: '"Space Mono", monospace',
+          flexShrink: 0,
+        }}>
+          {['File', 'View', 'Help'].map(m => (
+            <button key={m} style={{
+              padding: '0 8px', height: '20px',
+              background: 'transparent', border: 'none',
+              cursor: 'pointer', fontSize: '11px',
+              fontFamily: '"Space Mono", monospace',
+              color: dsTheme.text,
+            }}>{m}</button>
+          ))}
         </div>
 
         {/* Content */}
@@ -133,26 +154,27 @@ export default function Win95Window({
           className="flex-1 overflow-auto"
           style={{
             border: '2px solid',
-            borderColor: '#808080 #ffffff #ffffff #808080',
+            borderColor: bevelIn,
             margin: '4px',
-            background: 'rgba(255,255,255,0.6)',
+            background: dsTheme.surface,
+            backdropFilter: dsTheme.blur,
           }}
         >
           {children}
         </div>
 
         {/* Status bar */}
-        <div
-          className="flex items-center px-2 flex-shrink-0"
-          style={{
-            height: '20px',
-            background: 'rgba(192,192,192,0.7)',
-            borderTop: '1px solid #808080',
-            fontFamily: '"VT323", monospace',
-            fontSize: '13px',
-            color: '#404040',
-          }}
-        >
+        <div style={{
+          height: '20px',
+          background: dsTheme.surfaceSolid,
+          borderTop: `1px solid ${dsTheme.bevelDark}`,
+          display: 'flex', alignItems: 'center',
+          paddingLeft: '8px',
+          fontFamily: '"Space Mono", monospace',
+          fontSize: '10px',
+          color: dsTheme.textMuted,
+          flexShrink: 0,
+        }}>
           Ready
         </div>
       </div>

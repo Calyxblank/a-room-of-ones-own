@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import type { TimeOfDay, TimeTheme } from '../types';
+import type { DSTheme } from '../lib/design-system';
 
 const CONTENT: Record<TimeOfDay, {
   heading: string;
@@ -87,13 +88,13 @@ const STARS = Array.from({ length: 20 }, (_, i) => ({
   delay: Math.random() * 3,
 }));
 
-export default function WindowPanel({ timeOfDay, theme }: { timeOfDay: TimeOfDay; theme: TimeTheme }) {
+export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: TimeOfDay; theme: TimeTheme; dsTheme: DSTheme }) {
   const content = CONTENT[timeOfDay];
   const isNight = timeOfDay === 'night';
   const isDawn = timeOfDay === 'dawn';
 
   return (
-    <div className="flex flex-col h-full" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="flex flex-col h-full" style={{ fontFamily: '"Space Mono", monospace', color: dsTheme.text }}>
       {/* Sky view */}
       <div
         className="relative overflow-hidden flex-shrink-0"
@@ -174,19 +175,19 @@ export default function WindowPanel({ timeOfDay, theme }: { timeOfDay: TimeOfDay
       <div className="flex-1 overflow-auto p-4">
         {/* Quote */}
         <div style={{
-          background: 'rgba(0,0,128,0.06)',
-          border: '1px solid rgba(0,0,128,0.15)',
-          borderLeft: '3px solid #000080',
+          background: dsTheme.glass,
+          border: `1px solid ${dsTheme.glassBorder}`,
+          borderLeft: `3px solid ${dsTheme.accent1}`,
           padding: '12px 14px',
           marginBottom: '16px',
           fontStyle: 'italic',
         }}>
-          <p style={{ fontSize: '13px', color: '#111', marginBottom: '6px' }}>"{content.quote}"</p>
-          <p style={{ fontSize: '11px', color: '#555' }}>— {content.quoteBy}</p>
+          <p style={{ fontSize: '12px', color: dsTheme.text, marginBottom: '6px' }}>"{content.quote}"</p>
+          <p style={{ fontSize: '10px', color: dsTheme.textMuted }}>— {content.quoteBy}</p>
         </div>
 
         {/* Suggestions */}
-        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#000080', fontFamily: '"Press Start 2P", monospace', marginBottom: '8px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 'bold', color: dsTheme.accent1, fontFamily: '"Space Mono", monospace', marginBottom: '8px' }}>
           {content.emoji} {content.subheading}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -196,9 +197,9 @@ export default function WindowPanel({ timeOfDay, theme }: { timeOfDay: TimeOfDay
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '8px 10px',
-                background: i % 2 === 0 ? 'rgba(255,255,255,0.5)' : 'transparent',
-                border: '1px solid rgba(128,128,128,0.2)',
-                fontSize: '12px', color: '#222',
+                background: i % 2 === 0 ? dsTheme.glass : 'transparent',
+                border: `1px solid ${dsTheme.glassBorder}`,
+                fontSize: '11px', color: dsTheme.text,
                 cursor: 'default',
               }}
             >
