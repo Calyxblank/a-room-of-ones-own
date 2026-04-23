@@ -33,7 +33,6 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Shared playlists state
   const [sharedPlaylists, setSharedPlaylists] = useState<SharedPlaylist[]>([]);
   const [activeShared, setActiveShared] = useState<SharedPlaylist | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -60,7 +59,6 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [playing]);
 
-  // SSE for shared playlists
   useEffect(() => {
     const es = new EventSource('/api/playlist');
     es.onmessage = (e) => {
@@ -196,12 +194,12 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
       {/* Shared Playlists Tab */}
       {activeTab === 'shared' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Add Playlist button + form */}
           <div style={{ padding: '6px 8px', borderBottom: `1px solid ${dsTheme.bevelDark}`, flexShrink: 0, background: dsTheme.glass }}>
             {!showAddForm ? (
               <button
                 onClick={() => setShowAddForm(true)}
-                style={{ fontSize: '10px', padding: '3px 10px', display: 'flex', alignItems: 'center', gap: '5px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, cursor: 'pointer', fontFamily: '"Space Mono", monospace', color: dsTheme.text }}
+                className="ds-btn ds-btn-sm"
+                style={{ background: dsTheme.surfaceSolid, borderColor: bevel, color: dsTheme.text }}
               >
                 ➕ Add Spotify Playlist
               </button>
@@ -211,22 +209,24 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
                   placeholder="Spotify playlist URL"
                   value={urlInput}
                   onChange={e => setUrlInput(e.target.value)}
-                  style={{ fontSize: '10px', border: `1px solid ${dsTheme.bevelDark}`, padding: '3px 6px', width: '100%', background: dsTheme.surface, color: dsTheme.text, fontFamily: '"Space Mono", monospace', outline: 'none' }}
+                  className="ds-input"
+                  style={{ borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`, background: dsTheme.glass, backdropFilter: dsTheme.blur, color: dsTheme.text }}
                   onKeyDown={e => { if (e.key === 'Enter') submitPlaylist(); }}
                 />
                 <input
                   placeholder="Name (optional)"
                   value={titleInput}
                   onChange={e => setTitleInput(e.target.value)}
-                  style={{ fontSize: '10px', border: `1px solid ${dsTheme.bevelDark}`, padding: '3px 6px', width: '100%', background: dsTheme.surface, color: dsTheme.text, fontFamily: '"Space Mono", monospace', outline: 'none' }}
+                  className="ds-input"
+                  style={{ borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`, background: dsTheme.glass, backdropFilter: dsTheme.blur, color: dsTheme.text }}
                   onKeyDown={e => { if (e.key === 'Enter') submitPlaylist(); }}
                 />
-                {addError && <div style={{ fontSize: '10px', color: dsTheme.accent2 }}>{addError}</div>}
+                {addError && <div style={{ fontSize: '10px', color: dsTheme.accent2, fontFamily: '"Space Mono", monospace' }}>{addError}</div>}
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <button onClick={submitPlaylist} disabled={adding || !urlInput.trim()} style={{ fontSize: '10px', flex: 1, padding: '3px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, cursor: 'pointer', fontFamily: '"Space Mono", monospace', color: dsTheme.text, opacity: adding || !urlInput.trim() ? 0.5 : 1 }}>
+                  <button onClick={submitPlaylist} disabled={adding || !urlInput.trim()} className="ds-btn ds-btn-sm" style={{ flex: 1, background: dsTheme.accent1, borderColor: bevel, color: '#fff' }}>
                     {adding ? 'Adding…' : 'Add'}
                   </button>
-                  <button onClick={() => { setShowAddForm(false); setAddError(''); }} style={{ fontSize: '10px', padding: '3px 8px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, cursor: 'pointer', fontFamily: '"Space Mono", monospace', color: dsTheme.text }}>
+                  <button onClick={() => { setShowAddForm(false); setAddError(''); }} className="ds-btn ds-btn-sm" style={{ background: dsTheme.surfaceSolid, borderColor: bevel, color: dsTheme.text }}>
                     Cancel
                   </button>
                 </div>
@@ -234,7 +234,6 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
             )}
           </div>
 
-          {/* Shared playlist list */}
           {sharedPlaylists.length === 0 ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: dsTheme.textMuted, gap: '8px' }}>
               <div style={{ fontSize: '28px' }}>🎵</div>
@@ -270,7 +269,6 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
                 </div>
               ))}
 
-              {/* Spotify embed for selected playlist */}
               {activeShared && (
                 <div style={{ padding: '8px', borderTop: `1px solid ${dsTheme.bevelDark}` }}>
                   <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '6px', fontFamily: '"Space Mono", monospace' }}>
@@ -300,7 +298,7 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
             </div>
           )}
           <div className="flex-1 overflow-auto">
-            {displayTracks.map((track, i) => (
+            {displayTracks.map((track) => (
               <div
                 key={track.id}
                 onClick={() => setPlaying(playing === track.id ? null : track.id)}
@@ -337,13 +335,6 @@ export default function TurntablePanel({ timeOfDay, dsTheme }: { timeOfDay: Time
           </div>
         </>
       )}
-
-      <style jsx>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
