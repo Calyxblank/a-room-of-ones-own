@@ -75,7 +75,6 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
   };
 
   const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
-  const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
 
   return (
     <div style={{
@@ -149,15 +148,17 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
               onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
               autoFocus
               maxLength={28}
-              style={{ flex: 1, fontSize: '10px', border: `1px solid ${dsTheme.bevelDark}`, padding: '1px 3px', background: dsTheme.surface, color: dsTheme.text, fontFamily: '"Space Mono", monospace', outline: 'none' }}
+              className="ds-input"
+              style={{ flex: 1, borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`, background: dsTheme.glass, backdropFilter: dsTheme.blur, color: dsTheme.text }}
             />
-            <button onClick={saveName} style={{ ...chatBtnStyle(dsTheme, bevel), fontSize: '9px', padding: '1px 6px' }}>OK</button>
+            <button onClick={saveName} className="ds-btn ds-btn-sm" style={{ background: dsTheme.accent1, borderColor: `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`, color: '#fff' }}>OK</button>
           </>
         ) : (
           <>
-            <span style={{ fontWeight: 'bold', color: dsTheme.accent1 }}>{username}</span>
+            <span style={{ fontWeight: 700, color: dsTheme.accent1 }}>{username}</span>
             <button
-              style={{ ...chatBtnStyle(dsTheme, bevel), fontSize: '9px', padding: '1px 5px', marginLeft: 'auto' }}
+              className="ds-btn ds-btn-sm"
+              style={{ background: dsTheme.surfaceSolid, borderColor: `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`, color: dsTheme.text, marginLeft: 'auto' }}
               onClick={() => { setNameInput(username); setEditingName(true); }}
             >Edit</button>
           </>
@@ -168,16 +169,18 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '6px',
+        padding: '8px 6px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '4px',
+        gap: '6px',
         background: dsTheme.surface,
-        border: `1px solid ${dsTheme.bevelDark}`,
+        backdropFilter: dsTheme.blur,
+        WebkitBackdropFilter: dsTheme.blur,
+        border: `1px solid ${dsTheme.glassBorder}`,
         margin: '4px',
       }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', color: dsTheme.textMuted, marginTop: '20px', fontFamily: '"Space Mono", monospace', fontSize: '11px' }}>
+          <div style={{ textAlign: 'center', color: dsTheme.textMuted, marginTop: '20px', fontFamily: '"Space Mono", monospace', fontSize: '10px', lineHeight: 1.8 }}>
             No messages yet.<br />Say hello! 👋
           </div>
         )}
@@ -189,20 +192,23 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
               flexDirection: 'column',
               alignItems: isOwn ? 'flex-end' : 'flex-start',
             }}>
-              <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '2px', paddingLeft: isOwn ? 0 : '2px', paddingRight: isOwn ? '2px' : 0, fontFamily: '"Space Mono", monospace' }}>
-                {!isOwn && <span style={{ fontWeight: 'bold', color: dsTheme.accent1 }}>{m.user} · </span>}
+              <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '3px', paddingLeft: isOwn ? 0 : '4px', paddingRight: isOwn ? '4px' : 0, fontFamily: '"Space Mono", monospace' }}>
+                {!isOwn && <span style={{ fontWeight: 700, color: dsTheme.accent1 }}>{m.user} · </span>}
                 {formatTime(m.timestamp)}
               </div>
               <div style={{
                 maxWidth: '85%',
-                padding: '5px 8px',
-                background: isOwn ? dsTheme.accent1 : dsTheme.glass,
-                color: isOwn ? dsTheme.titleText : dsTheme.text,
+                padding: '8px 12px',
+                background: isOwn ? `${dsTheme.accent1}cc` : dsTheme.glass,
+                backdropFilter: dsTheme.blur,
+                WebkitBackdropFilter: dsTheme.blur,
+                color: isOwn ? '#fff' : dsTheme.text,
                 fontSize: '11px',
                 fontFamily: '"Space Mono", monospace',
-                border: `1px solid ${isOwn ? dsTheme.accent1 : dsTheme.bevelDark}`,
+                border: `1px solid ${isOwn ? dsTheme.accent1 : dsTheme.glassBorder}`,
+                borderRadius: isOwn ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                 wordBreak: 'break-word',
-                lineHeight: '1.5',
+                lineHeight: '1.6',
               }}>
                 {m.text}
               </div>
@@ -226,36 +232,30 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           placeholder="Type a message…"
           maxLength={400}
+          className="ds-input"
           style={{
             flex: 1,
-            fontSize: '11px',
-            fontFamily: '"Space Mono", monospace',
-            border: `1px solid ${dsTheme.bevelDark}`,
-            padding: '3px 6px',
-            background: dsTheme.surface,
+            borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`,
+            background: dsTheme.glass,
+            backdropFilter: dsTheme.blur,
+            WebkitBackdropFilter: dsTheme.blur,
             color: dsTheme.text,
-            outline: 'none',
           }}
         />
         <button
           onClick={send}
           disabled={!input.trim()}
-          style={{ ...chatBtnStyle(dsTheme, bevel), fontSize: '10px', padding: '3px 10px', flexShrink: 0, opacity: input.trim() ? 1 : 0.5 }}
+          className="ds-btn ds-btn-sm"
+          style={{
+            background: dsTheme.accent1,
+            borderColor: `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`,
+            color: '#fff',
+            flexShrink: 0,
+          }}
         >
           Send
         </button>
       </div>
     </div>
   );
-}
-
-function chatBtnStyle(dsTheme: DSTheme, bevel: string): React.CSSProperties {
-  return {
-    background: dsTheme.chromeLight,
-    border: '2px solid',
-    borderColor: bevel,
-    cursor: 'pointer',
-    fontFamily: '"Space Mono", monospace',
-    color: dsTheme.text,
-  };
 }
