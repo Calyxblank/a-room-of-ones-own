@@ -167,6 +167,7 @@ export default function NotesCanvas({ perfTier, dsTheme }: { perfTier: Performan
           <StickyNote
             key={note.id}
             note={note}
+            dsTheme={dsTheme}
             onUpdate={updateNote}
             onDelete={deleteNote}
             onStartConnect={startConnect}
@@ -194,4 +195,3 @@ export default function NotesCanvas({ perfTier, dsTheme }: { perfTier: Performan
     </div>
   );
 }
-
