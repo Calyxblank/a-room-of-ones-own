@@ -1,9 +1,11 @@
 'use client';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { Note } from '../types';
+import type { DSTheme } from '../lib/design-system';
 
 interface StickyNoteProps {
   note: Note;
+  dsTheme: DSTheme;
   onUpdate: (id: string, updates: Partial<Note>) => void;
   onDelete: (id: string) => void;
   onStartConnect: (id: string) => void;
@@ -15,6 +17,7 @@ interface StickyNoteProps {
 
 export default function StickyNote({
   note,
+  dsTheme,
   onUpdate,
   onDelete,
   onStartConnect,
@@ -86,26 +89,46 @@ export default function StickyNote({
     left: `${note.x}px`,
     top: `${note.y}px`,
     width: '160px',
-    minHeight: '120px',
+    minHeight: '160px',
     background: note.color,
-    border: isConnectingFrom ? '3px dashed #000080' : isConnecting ? '2px dashed #333' : '1px solid rgba(0,0,0,0.2)',
-    boxShadow: isConnecting ? '0 0 0 2px #000080' : '2px 4px 8px rgba(0,0,0,0.25), 1px 1px 0 rgba(255,255,255,0.4) inset',
+    border: isConnectingFrom
+      ? `3px dashed ${dsTheme.accent1}`
+      : isConnecting
+        ? `2px dashed ${dsTheme.bevelDark}`
+        : '1px solid rgba(0,0,0,0.15)',
+    boxShadow: isConnecting
+      ? `0 0 0 2px ${dsTheme.accent1}`
+      : `3px 3px 0 ${dsTheme.postitShadow}, 6px 6px 12px rgba(0,0,0,0.15)`,
     cursor: editing ? 'text' : isConnecting ? 'crosshair' : 'grab',
     display: 'flex',
     flexDirection: 'column',
     padding: '0',
     userSelect: editing ? 'text' : 'none',
-    transition: reduceAnimations ? 'none' : 'box-shadow 0.15s, border 0.15s',
+    transition: reduceAnimations ? 'none' : 'box-shadow 0.2s, transform 0.2s',
     zIndex: editing ? 20 : 10,
-    transform: reduceAnimations ? 'none' : 'rotate(0.5deg)',
+    transform: reduceAnimations ? 'none' : (editing ? 'rotate(0deg) scale(1.04)' : 'rotate(0.5deg)'),
   };
 
   return (
     <div style={noteStyle} onMouseDown={onMouseDown} onTouchStart={onTouchStart}>
+      {/* Tape strip */}
+      <div style={{
+        position: 'absolute',
+        top: '-8px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '50px',
+        height: '16px',
+        background: 'rgba(255,255,200,0.7)',
+        border: '1px solid rgba(200,190,100,0.4)',
+        pointerEvents: 'none',
+        zIndex: 1,
+      }} />
+
       {/* Note top bar */}
       <div style={{
         height: '24px',
-        background: 'rgba(0,0,0,0.12)',
+        background: 'rgba(0,0,0,0.10)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         paddingLeft: '6px', paddingRight: '4px',
         flexShrink: 0,
@@ -123,8 +146,8 @@ export default function StickyNote({
             title="Connect to another note"
             style={{
               width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer',
-              background: isConnectingFrom ? '#000080' : 'rgba(0,0,0,0.1)',
-              color: isConnectingFrom ? 'white' : '#333',
+              background: isConnectingFrom ? dsTheme.accent1 : 'rgba(0,0,0,0.1)',
+              color: isConnectingFrom ? '#fff' : dsTheme.text,
               border: '1px solid rgba(0,0,0,0.2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: '2px',
@@ -136,8 +159,8 @@ export default function StickyNote({
             title="Delete note"
             style={{
               width: '16px', height: '16px', fontSize: '9px', cursor: 'pointer',
-              background: 'rgba(200,0,0,0.15)',
-              color: '#700',
+              background: 'rgba(200,0,0,0.18)',
+              color: dsTheme.accent2,
               border: '1px solid rgba(0,0,0,0.2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               borderRadius: '2px',
@@ -162,31 +185,33 @@ export default function StickyNote({
             style={{
               width: '100%',
               height: '100%',
-              minHeight: '80px',
+              minHeight: '100px',
               background: 'transparent',
               border: 'none',
               outline: 'none',
               resize: 'none',
-              fontFamily: '"VT323", monospace',
-              fontSize: '16px',
-              lineHeight: '1.4',
-              color: '#222',
+              fontFamily: '"Space Mono", monospace',
+              fontSize: '11px',
+              lineHeight: '1.7',
+              color: '#3a3010',
+              fontStyle: 'italic',
             }}
           />
         ) : (
           <div
             style={{
-              fontFamily: '"VT323", monospace',
-              fontSize: '16px',
-              lineHeight: '1.4',
-              color: '#222',
+              fontFamily: '"Space Mono", monospace',
+              fontSize: '11px',
+              lineHeight: '1.7',
+              color: '#3a3010',
+              fontStyle: 'italic',
               wordBreak: 'break-word',
-              minHeight: '80px',
+              minHeight: '100px',
               cursor: 'grab',
               whiteSpace: 'pre-wrap',
             }}
           >
-            {note.content || <span style={{ color: 'rgba(0,0,0,0.3)', fontSize: '13px' }}>Double-click to edit</span>}
+            {note.content || <span style={{ color: 'rgba(0,0,0,0.28)', fontSize: '10px', fontStyle: 'italic' }}>Double-click to edit</span>}
           </div>
         )}
       </div>
