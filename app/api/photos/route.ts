@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { redis } from '../../../lib/redis';
-import { supabase, BUCKET } from '../../../lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,25 +41,9 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Image too large (max ~1.5MB)' }, { status: 400 });
   }
 
-  const mimeType = dataUrl.match(/^data:(image\/\w+);base64,/)?.[1] ?? 'image/jpeg';
-  const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-  const buffer = Buffer.from(base64Data, 'base64');
-  const filePath = `${roomId}/${frame}.jpg`;
-
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(filePath, buffer, { contentType: mimeType, upsert: true });
-
-  if (error) {
-    console.error('Supabase upload error:', error);
-    return Response.json({ error: 'Upload failed' }, { status: 500 });
-  }
-
-  const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
-
   const photo: RoomPhoto = {
     id: String(Date.now()),
-    dataUrl: `${publicUrl}?t=${Date.now()}`,
+    dataUrl,
     frame,
     uploadedAt: Date.now(),
   };
@@ -75,8 +58,6 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
   const { frame } = await req.json();
-
-  await supabase.storage.from(BUCKET).remove([`${roomId}/${frame}.jpg`]);
 
   const photos = await getPhotos(roomId);
   delete photos[Number(frame)];
