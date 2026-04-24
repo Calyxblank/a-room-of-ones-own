@@ -1,10 +1,12 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import type { TimeTheme, TimeOfDay, ActivePanel, RoomPhoto } from '../types';
+import type { DSTheme } from '../lib/design-system';
 
 interface RoomProps {
   theme: TimeTheme;
   timeOfDay: TimeOfDay;
+  dsTheme: DSTheme;
   onOpen: (panel: ActivePanel) => void;
   reduceAnimations: boolean;
 }
@@ -16,7 +18,6 @@ const ROOM_IMAGES: Record<TimeOfDay, string> = {
   night:     '/rooms/night.jpg',
 };
 
-// Subtle overlay only for afternoon (same image as morning, slight blush tint to differentiate)
 const OVERLAY: Record<TimeOfDay, string> = {
   dawn:      'rgba(0,0,0,0)',
   morning:   'rgba(0,0,0,0)',
@@ -39,7 +40,7 @@ function compressImage(dataUrl: string, maxPx = 400): Promise<string> {
   });
 }
 
-export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: RoomProps) {
+export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: RoomProps) {
   const [photos, setPhotos] = useState<Record<number, RoomPhoto>>({});
   const fileRefs = [
     useRef<HTMLInputElement>(null),
@@ -75,21 +76,12 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
   };
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        fontFamily: '"Press Start 2P", monospace',
-        backgroundImage: `url(${ROOM_IMAGES[timeOfDay]})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        transition: reduceAnimations ? 'none' : 'background-image 0s',
-        imageRendering: 'pixelated',
-      }}
-    >
-      {/* Afternoon tint (differentiates from morning, same image) */}
+    <div style={{
+      position: 'relative', width: '100%', height: '100%', overflow: 'hidden',
+      backgroundImage: `url(${ROOM_IMAGES[timeOfDay]})`,
+      backgroundSize: 'cover', backgroundPosition: 'center',
+      imageRendering: 'pixelated',
+    }}>
       <div style={{
         position: 'absolute', inset: 0,
         background: OVERLAY[timeOfDay],
@@ -97,83 +89,47 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
         transition: reduceAnimations ? 'none' : 'background 1.5s ease',
       }} />
 
-      {/* ── Hidden file inputs for photo frames ── */}
       {fileRefs.map((ref, i) => (
         <input
-          key={i}
-          ref={ref}
-          type="file"
-          accept="image/*"
+          key={i} ref={ref} type="file" accept="image/*"
           style={{ display: 'none' }}
           onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(i, f); e.target.value = ''; }}
         />
       ))}
 
-      {/* ── Photo Frame 0 — small landscape painting, top-left wall ── */}
-      <PhotoFrame
-        photo={photos[0]}
+      <PhotoFrame photo={photos[0]} dsTheme={dsTheme}
         style={{ position: 'absolute', left: '1.5%', top: '4%', width: '10%', height: '17%' }}
-        onUpload={() => fileRefs[0].current?.click()}
-        onRemove={() => removePhoto(0)}
-        reduceAnimations={reduceAnimations}
-      />
+        onUpload={() => fileRefs[0].current?.click()} onRemove={() => removePhoto(0)} reduceAnimations={reduceAnimations} />
 
-      {/* ── Photo Frame 1 — large landscape painting, centre-top wall ── */}
-      <PhotoFrame
-        photo={photos[1]}
+      <PhotoFrame photo={photos[1]} dsTheme={dsTheme}
         style={{ position: 'absolute', left: '27%', top: '1%', width: '16%', height: '23%' }}
-        onUpload={() => fileRefs[1].current?.click()}
-        onRemove={() => removePhoto(1)}
-        reduceAnimations={reduceAnimations}
-      />
+        onUpload={() => fileRefs[1].current?.click()} onRemove={() => removePhoto(1)} reduceAnimations={reduceAnimations} />
 
-      {/* ── Photo Frame 2 — vinyl posters area, wall above turntable ── */}
-      <PhotoFrame
-        photo={photos[2]}
+      <PhotoFrame photo={photos[2]} dsTheme={dsTheme}
         style={{ position: 'absolute', left: '44%', top: '5%', width: '9%', height: '17%' }}
-        onUpload={() => fileRefs[2].current?.click()}
-        onRemove={() => removePhoto(2)}
-        reduceAnimations={reduceAnimations}
-      />
+        onUpload={() => fileRefs[2].current?.click()} onRemove={() => removePhoto(2)} reduceAnimations={reduceAnimations} />
 
-      {/* ── Window / French doors — left side ── */}
-      <Hotspot
-        onClick={() => onOpen('window')}
-        label="Window"
-        emoji="🪟"
+      <Hotspot onClick={() => onOpen('window')} label="Window" emoji="🪟" dsTheme={dsTheme}
         style={{ position: 'absolute', left: '2%', top: '7%', width: '17%', height: '79%' }}
-        reduceAnimations={reduceAnimations}
-      />
+        reduceAnimations={reduceAnimations} />
 
-      {/* ── Turntable — on the sideboard, centre-left ── */}
-      <Hotspot
-        onClick={() => onOpen('turntable')}
-        label="Turntable"
-        emoji="🎵"
+      <Hotspot onClick={() => onOpen('turntable')} label="Turntable" emoji="🎵" dsTheme={dsTheme}
         style={{ position: 'absolute', left: '34%', top: '20%', width: '20%', height: '22%' }}
-        reduceAnimations={reduceAnimations}
-      />
+        reduceAnimations={reduceAnimations} />
 
-      {/* ── Desk / Notes — bed area with open book ── */}
-      <Hotspot
-        onClick={() => onOpen('desk')}
-        label="Desk"
-        emoji="📝"
+      <Hotspot onClick={() => onOpen('desk')} label="Desk" emoji="📝" dsTheme={dsTheme}
         style={{ position: 'absolute', left: '47%', top: '37%', width: '31%', height: '34%' }}
-        reduceAnimations={reduceAnimations}
-      />
+        reduceAnimations={reduceAnimations} />
 
-      {/* Help hint */}
       <div style={{
         position: 'absolute', bottom: '8px', left: '8px',
-        background: 'rgba(0,0,0,0.60)',
+        background: 'rgba(0,0,0,0.55)',
         color: 'rgba(255,255,255,0.85)',
-        fontSize: '8px',
-        fontFamily: '"Press Start 2P", monospace',
-        padding: '5px 8px',
+        fontSize: '9px',
+        fontFamily: '"Space Mono", monospace',
+        padding: '4px 8px',
         pointerEvents: 'none',
-        border: '1px solid rgba(255,255,255,0.15)',
-        lineHeight: '1.8',
+        border: '1px solid rgba(255,255,255,0.12)',
       }}>
         Click objects to interact
       </div>
@@ -181,12 +137,10 @@ export default function Room({ theme, timeOfDay, onOpen, reduceAnimations }: Roo
   );
 }
 
-/* ── Photo Frame ── */
-function PhotoFrame({
-  photo, style, onUpload, onRemove, reduceAnimations,
-}: {
+function PhotoFrame({ photo, style, dsTheme, onUpload, onRemove, reduceAnimations }: {
   photo?: RoomPhoto;
   style: React.CSSProperties;
+  dsTheme: DSTheme;
   onUpload: () => void;
   onRemove: () => void;
   reduceAnimations: boolean;
@@ -196,14 +150,10 @@ function PhotoFrame({
   return (
     <div
       style={{
-        ...style,
-        cursor: 'pointer',
-        outline: hovered ? '2px solid rgba(255,255,100,0.75)' : '2px solid transparent',
+        ...style, cursor: 'pointer', zIndex: 5, overflow: 'hidden',
+        outline: hovered ? `2px solid ${dsTheme.accent4}` : '2px solid transparent',
         outlineOffset: '2px',
         transition: reduceAnimations ? 'none' : 'outline 0.12s',
-        zIndex: 5,
-        overflow: 'hidden',
-        // Transparent by default — just an invisible click zone over the painting
         background: photo ? undefined : 'transparent',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -211,14 +161,9 @@ function PhotoFrame({
       onClick={onUpload}
     >
       {photo && (
-        <img
-          src={photo.dataUrl}
-          alt="Photo frame"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
+        <img src={photo.dataUrl} alt="Photo frame"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       )}
-
-      {/* Hover overlay */}
       {hovered && (
         <div style={{
           position: 'absolute', inset: 0,
@@ -227,13 +172,13 @@ function PhotoFrame({
           alignItems: 'center', justifyContent: 'center', gap: '4px',
         }}>
           <span style={{ fontSize: '16px' }}>{photo ? '📷' : '🖼'}</span>
-          <span style={{ fontSize: '7px', color: 'white', fontFamily: '"Press Start 2P", monospace', textShadow: '1px 1px 2px #000' }}>
+          <span style={{ fontSize: '8px', color: 'white', fontFamily: '"Space Mono", monospace', textShadow: '1px 1px 2px #000' }}>
             {photo ? 'Change' : 'Upload photo'}
           </span>
           {photo && (
             <button
               onClick={e => { e.stopPropagation(); onRemove(); }}
-              style={{ fontSize: '8px', background: 'rgba(180,0,0,0.85)', border: '1px solid #ff5555', color: 'white', cursor: 'pointer', padding: '2px 5px', marginTop: '2px' }}
+              style={{ fontSize: '8px', background: 'rgba(180,0,0,0.85)', border: '1px solid #ff5555', color: 'white', cursor: 'pointer', padding: '2px 5px', marginTop: '2px', fontFamily: '"Space Mono", monospace' }}
             >✕ Remove</button>
           )}
         </div>
@@ -242,16 +187,16 @@ function PhotoFrame({
   );
 }
 
-/* ── Hotspot (transparent click zone) ── */
-function Hotspot({ onClick, label, emoji, style, reduceAnimations }: {
+function Hotspot({ onClick, label, emoji, style, dsTheme, reduceAnimations }: {
   onClick: () => void;
   label: string;
   emoji: string;
   style: React.CSSProperties;
-  children?: React.ReactNode;
+  dsTheme: DSTheme;
   reduceAnimations: boolean;
 }) {
   const [hovered, setHovered] = React.useState(false);
+  const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
 
   return (
     <div
@@ -259,13 +204,10 @@ function Hotspot({ onClick, label, emoji, style, reduceAnimations }: {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        ...style,
-        cursor: 'pointer',
-        outline: hovered ? '3px solid rgba(255,255,0,0.75)' : '3px solid transparent',
+        ...style, cursor: 'pointer', zIndex: 5, background: 'transparent',
+        outline: hovered ? `3px solid ${dsTheme.accent4}` : '3px solid transparent',
         outlineOffset: '3px',
         transition: reduceAnimations ? 'none' : 'outline 0.12s',
-        zIndex: 5,
-        background: 'transparent',
       }}
     >
       {hovered && (
@@ -273,15 +215,17 @@ function Hotspot({ onClick, label, emoji, style, reduceAnimations }: {
           position: 'absolute',
           bottom: '100%', left: '50%', transform: 'translateX(-50%)',
           marginBottom: '6px',
-          background: 'rgba(0,0,0,0.88)',
-          color: 'white',
+          background: dsTheme.surfaceSolid,
+          color: dsTheme.text,
           fontSize: '9px',
-          fontFamily: '"Press Start 2P", monospace',
+          fontFamily: '"Space Mono", monospace',
           padding: '4px 10px',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
           zIndex: 100,
-          border: '1px solid rgba(255,255,255,0.25)',
+          border: '2px solid',
+          borderColor: bevel,
+          boxShadow: `2px 2px 0 ${dsTheme.chromeDark}`,
         }}>
           {emoji} {label}
         </div>
