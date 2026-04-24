@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { redis } from '../../../lib/redis';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,42 +12,43 @@ export interface SharedPlaylist {
   addedAt: number;
 }
 
-type RoomStore = {
-  playlists: SharedPlaylist[];
-  clients: Set<ReadableStreamDefaultController<Uint8Array>>;
-};
-
-const rooms = new Map<string, RoomStore>();
+// SSE clients are inherently in-memory (live connections)
+const clients = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 const encoder = new TextEncoder();
 
-function getRoom(roomId: string): RoomStore {
-  if (!rooms.has(roomId)) {
-    rooms.set(roomId, { playlists: [], clients: new Set() });
-  }
-  return rooms.get(roomId)!;
+function getClients(roomId: string) {
+  if (!clients.has(roomId)) clients.set(roomId, new Set());
+  return clients.get(roomId)!;
 }
 
-function broadcast(room: RoomStore, payload: string) {
+function broadcast(roomId: string, payload: string) {
   const bytes = encoder.encode(`data: ${payload}\n\n`);
-  room.clients.forEach(ctrl => {
-    try {
-      ctrl.enqueue(bytes);
-    } catch {
-      room.clients.delete(ctrl);
-    }
+  const room = getClients(roomId);
+  room.forEach(ctrl => {
+    try { ctrl.enqueue(bytes); } catch { room.delete(ctrl); }
   });
+}
+
+async function getPlaylists(roomId: string): Promise<SharedPlaylist[]> {
+  const data = await redis.get<SharedPlaylist[]>(`room:playlists:${roomId}`);
+  return data ?? [];
+}
+
+async function savePlaylists(roomId: string, playlists: SharedPlaylist[]) {
+  await redis.set(`room:playlists:${roomId}`, playlists);
 }
 
 export async function GET(req: NextRequest) {
   const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
-  const room = getRoom(roomId);
+  const room = getClients(roomId);
+  const playlists = await getPlaylists(roomId);
 
   const stream = new ReadableStream<Uint8Array>({
     start(ctrl) {
-      room.clients.add(ctrl);
-      ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', playlists: room.playlists })}\n\n`));
+      room.add(ctrl);
+      ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', playlists })}\n\n`));
       req.signal.addEventListener('abort', () => {
-        room.clients.delete(ctrl);
+        room.delete(ctrl);
         try { ctrl.close(); } catch { /* already closed */ }
       });
     },
@@ -64,14 +66,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
-  const room = getRoom(roomId);
   const body = await req.json();
 
   const rawUrl = String(body.url ?? '');
   const match = rawUrl.match(/(?:playlist|album)\/([A-Za-z0-9]+)/);
-  if (!match) {
-    return Response.json({ error: 'Paste a Spotify playlist or album URL' }, { status: 400 });
-  }
+  if (!match) return Response.json({ error: 'Paste a Spotify playlist or album URL' }, { status: 400 });
 
   const pl: SharedPlaylist = {
     id: String(Date.now()),
@@ -81,19 +80,21 @@ export async function POST(req: NextRequest) {
     addedAt: Date.now(),
   };
 
-  room.playlists.unshift(pl);
-  if (room.playlists.length > 20) room.playlists = room.playlists.slice(0, 20);
+  const playlists = await getPlaylists(roomId);
+  playlists.unshift(pl);
+  await savePlaylists(roomId, playlists.slice(0, 20));
 
-  broadcast(room, JSON.stringify({ type: 'add', playlist: pl }));
+  broadcast(roomId, JSON.stringify({ type: 'add', playlist: pl }));
   return Response.json({ ok: true, playlist: pl });
 }
 
 export async function DELETE(req: NextRequest) {
   const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
-  const room = getRoom(roomId);
   const { id } = await req.json();
 
-  room.playlists = room.playlists.filter(p => p.id !== id);
-  broadcast(room, JSON.stringify({ type: 'remove', id }));
+  const playlists = await getPlaylists(roomId);
+  await savePlaylists(roomId, playlists.filter(p => p.id !== id));
+
+  broadcast(roomId, JSON.stringify({ type: 'remove', id }));
   return Response.json({ ok: true });
 }
