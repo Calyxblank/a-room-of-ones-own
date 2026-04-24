@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { TimeTheme, TimeOfDay, ActivePanel, RoomPhoto } from '../types';
 import type { DSTheme } from '../lib/design-system';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface RoomProps {
   theme: TimeTheme;
@@ -41,6 +42,7 @@ function compressImage(dataUrl: string, maxPx = 400): Promise<string> {
 }
 
 export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: RoomProps) {
+  const isMobile = useIsMobile();
   const [photos, setPhotos] = useState<Record<number, RoomPhoto>>({});
   const fileRefs = [
     useRef<HTMLInputElement>(null),
@@ -125,13 +127,13 @@ export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: R
         position: 'absolute', bottom: '8px', left: '8px',
         background: 'rgba(0,0,0,0.55)',
         color: 'rgba(255,255,255,0.85)',
-        fontSize: '9px',
+        fontSize: isMobile ? '11px' : '9px',
         fontFamily: '"Space Mono", monospace',
-        padding: '4px 8px',
+        padding: isMobile ? '6px 10px' : '4px 8px',
         pointerEvents: 'none',
         border: '1px solid rgba(255,255,255,0.12)',
       }}>
-        Click objects to interact
+        {isMobile ? 'Tap objects to interact' : 'Click objects to interact'}
       </div>
     </div>
   );
@@ -155,6 +157,7 @@ function PhotoFrame({ photo, style, dsTheme, onUpload, onRemove, reduceAnimation
         outlineOffset: '2px',
         transition: reduceAnimations ? 'none' : 'outline 0.12s',
         background: photo ? undefined : 'transparent',
+        WebkitTapHighlightColor: 'transparent',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -195,31 +198,45 @@ function Hotspot({ onClick, label, emoji, style, dsTheme, reduceAnimations }: {
   dsTheme: DSTheme;
   reduceAnimations: boolean;
 }) {
-  const [hovered, setHovered] = React.useState(false);
+  const [active, setActive] = React.useState(false);
   const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setActive(true);
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setActive(false);
+    onClick();
+  };
 
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => setActive(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={() => setActive(false)}
       style={{
         ...style, cursor: 'pointer', zIndex: 5, background: 'transparent',
-        outline: hovered ? `3px solid ${dsTheme.accent4}` : '3px solid transparent',
+        outline: active ? `3px solid ${dsTheme.accent4}` : '3px solid transparent',
         outlineOffset: '3px',
         transition: reduceAnimations ? 'none' : 'outline 0.12s',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {hovered && (
+      {active && (
         <div style={{
           position: 'absolute',
           bottom: '100%', left: '50%', transform: 'translateX(-50%)',
           marginBottom: '6px',
           background: dsTheme.surfaceSolid,
           color: dsTheme.text,
-          fontSize: '9px',
+          fontSize: '10px',
           fontFamily: '"Space Mono", monospace',
-          padding: '4px 10px',
+          padding: '5px 12px',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
           zIndex: 100,
