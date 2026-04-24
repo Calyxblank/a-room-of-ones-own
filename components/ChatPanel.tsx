@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { ChatMessage } from '../types';
 import type { DSTheme } from '../lib/design-system';
+import Btn from './Btn';
+import Win95Input from './Win95Input';
 
 function getOrCreateUsername(): string {
   if (typeof window === 'undefined') return 'Guest';
@@ -16,12 +18,7 @@ function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-interface ChatPanelProps {
-  onClose: () => void;
-  dsTheme: DSTheme;
-}
-
-export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
+export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; dsTheme: DSTheme }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [username, setUsername] = useState('Guest');
@@ -31,28 +28,21 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setUsername(getOrCreateUsername());
-  }, []);
+  useEffect(() => { setUsername(getOrCreateUsername()); }, []);
 
   useEffect(() => {
     const es = new EventSource('/api/chat');
     es.onopen = () => setOnline(true);
     es.onerror = () => setOnline(false);
     es.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'history') {
-        setMessages(data.messages);
-      } else if (data.type === 'message') {
-        setMessages(prev => [...prev, data.message]);
-      }
+      const data = JSON.parse(e.data) as { type: string; messages?: ChatMessage[]; message?: ChatMessage };
+      if (data.type === 'history') setMessages(data.messages ?? []);
+      else if (data.type === 'message' && data.message) setMessages(prev => [...prev, data.message!]);
     };
     return () => es.close();
   }, []);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -67,10 +57,7 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
 
   const saveName = () => {
     const n = nameInput.trim().slice(0, 28);
-    if (n) {
-      setUsername(n);
-      localStorage.setItem('room-username', n);
-    }
+    if (n) { setUsername(n); localStorage.setItem('room-username', n); }
     setEditingName(false);
   };
 
@@ -79,7 +66,7 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '44px',
+      bottom: '38px',
       right: '12px',
       width: '320px',
       height: '420px',
@@ -97,11 +84,8 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
       <div style={{
         height: '26px',
         background: dsTheme.titleBar,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingLeft: '6px',
-        paddingRight: '4px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        paddingLeft: '6px', paddingRight: '4px',
         flexShrink: 0,
       }}>
         <div style={{ color: dsTheme.titleText, fontSize: '10px', fontFamily: '"Space Mono", monospace', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700, textShadow: '1px 1px 0 rgba(0,0,0,0.4)' }}>
@@ -118,8 +102,7 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
           style={{
             width: '18px', height: '18px',
             background: dsTheme.chromeLight,
-            border: '2px solid',
-            borderColor: bevel,
+            border: '2px solid', borderColor: bevel,
             fontSize: '9px', fontWeight: 'bold',
             cursor: 'pointer', lineHeight: 1,
             color: dsTheme.chromeDark,
@@ -132,47 +115,40 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
         padding: '4px 6px',
         borderBottom: `1px solid ${dsTheme.bevelDark}`,
         fontSize: '10px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
+        display: 'flex', alignItems: 'center', gap: '6px',
         flexShrink: 0,
         background: dsTheme.glass,
-        fontFamily: '"Space Mono", monospace',
       }}>
         <span style={{ color: dsTheme.textMuted }}>You:</span>
         {editingName ? (
           <>
-            <input
+            <Win95Input
+              dsTheme={dsTheme}
               value={nameInput}
               onChange={e => setNameInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
               autoFocus
               maxLength={28}
-              className="ds-input"
-              style={{ flex: 1, borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`, background: dsTheme.glass, backdropFilter: dsTheme.blur, color: dsTheme.text }}
+              style={{ flex: 1 }}
             />
-            <button onClick={saveName} className="ds-btn ds-btn-sm" style={{ background: dsTheme.accent1, borderColor: `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`, color: '#fff' }}>OK</button>
+            <Btn dsTheme={dsTheme} variant="primary" size="sm" onClick={saveName}>OK</Btn>
           </>
         ) : (
           <>
             <span style={{ fontWeight: 700, color: dsTheme.accent1 }}>{username}</span>
-            <button
-              className="ds-btn ds-btn-sm"
-              style={{ background: dsTheme.surfaceSolid, borderColor: `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`, color: dsTheme.text, marginLeft: 'auto' }}
+            <Btn dsTheme={dsTheme} variant="ghost" size="sm"
+              style={{ marginLeft: 'auto', minWidth: 'unset' }}
               onClick={() => { setNameInput(username); setEditingName(true); }}
-            >Edit</button>
+            >Edit</Btn>
           </>
         )}
       </div>
 
       {/* Messages */}
       <div style={{
-        flex: 1,
-        overflowY: 'auto',
+        flex: 1, overflowY: 'auto',
         padding: '8px 6px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
+        display: 'flex', flexDirection: 'column', gap: '6px',
         background: dsTheme.surface,
         backdropFilter: dsTheme.blur,
         WebkitBackdropFilter: dsTheme.blur,
@@ -187,28 +163,20 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
         {messages.map(m => {
           const isOwn = m.user === username;
           return (
-            <div key={m.id} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: isOwn ? 'flex-end' : 'flex-start',
-            }}>
-              <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '3px', paddingLeft: isOwn ? 0 : '4px', paddingRight: isOwn ? '4px' : 0, fontFamily: '"Space Mono", monospace' }}>
+            <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
+              <div style={{ fontSize: '9px', color: dsTheme.textMuted, marginBottom: '3px', paddingLeft: isOwn ? 0 : '4px', paddingRight: isOwn ? '4px' : 0 }}>
                 {!isOwn && <span style={{ fontWeight: 700, color: dsTheme.accent1 }}>{m.user} · </span>}
                 {formatTime(m.timestamp)}
               </div>
               <div style={{
-                maxWidth: '85%',
-                padding: '8px 12px',
+                maxWidth: '85%', padding: '8px 12px',
                 background: isOwn ? `${dsTheme.accent1}cc` : dsTheme.glass,
-                backdropFilter: dsTheme.blur,
-                WebkitBackdropFilter: dsTheme.blur,
+                backdropFilter: dsTheme.blur, WebkitBackdropFilter: dsTheme.blur,
                 color: isOwn ? '#fff' : dsTheme.text,
-                fontSize: '11px',
-                fontFamily: '"Space Mono", monospace',
+                fontSize: '11px', fontFamily: '"Space Mono", monospace',
                 border: `1px solid ${isOwn ? dsTheme.accent1 : dsTheme.glassBorder}`,
                 borderRadius: isOwn ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                wordBreak: 'break-word',
-                lineHeight: '1.6',
+                wordBreak: 'break-word', lineHeight: '1.6',
               }}>
                 {m.text}
               </div>
@@ -219,42 +187,20 @@ export default function ChatPanel({ onClose, dsTheme }: ChatPanelProps) {
       </div>
 
       {/* Input */}
-      <div style={{
-        display: 'flex',
-        gap: '4px',
-        padding: '4px 6px 6px',
-        flexShrink: 0,
-      }}>
-        <input
+      <div style={{ display: 'flex', gap: '4px', padding: '4px 6px 6px', flexShrink: 0 }}>
+        <Win95Input
           ref={inputRef}
+          dsTheme={dsTheme}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           placeholder="Type a message…"
           maxLength={400}
-          className="ds-input"
-          style={{
-            flex: 1,
-            borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`,
-            background: dsTheme.glass,
-            backdropFilter: dsTheme.blur,
-            WebkitBackdropFilter: dsTheme.blur,
-            color: dsTheme.text,
-          }}
+          style={{ flex: 1 }}
         />
-        <button
-          onClick={send}
-          disabled={!input.trim()}
-          className="ds-btn ds-btn-sm"
-          style={{
-            background: dsTheme.accent1,
-            borderColor: `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`,
-            color: '#fff',
-            flexShrink: 0,
-          }}
-        >
+        <Btn dsTheme={dsTheme} variant="primary" size="sm" onClick={send} disabled={!input.trim()}>
           Send
-        </button>
+        </Btn>
       </div>
     </div>
   );
