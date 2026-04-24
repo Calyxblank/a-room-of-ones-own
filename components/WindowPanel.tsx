@@ -82,13 +82,14 @@ const SKY_STYLES: Record<TimeOfDay, React.CSSProperties> = {
 };
 
 const STARS = Array.from({ length: 20 }, (_, i) => ({
-  x: Math.random() * 100,
-  y: Math.random() * 60,
-  size: Math.random() * 2 + 1,
-  delay: Math.random() * 3,
+  x: (i * 17 + 11) % 100,
+  y: (i * 23 + 7) % 60,
+  size: (i % 3) + 1,
+  delay: (i * 0.3) % 3,
 }));
 
 export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: TimeOfDay; theme: TimeTheme; dsTheme: DSTheme }) {
+  void theme;
   const content = CONTENT[timeOfDay];
   const isNight = timeOfDay === 'night';
   const isDawn = timeOfDay === 'dawn';
@@ -134,7 +135,6 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
           }} />
         )}
 
-        {/* Clouds — softer tints per theme */}
         {!isNight && (
           <>
             <div style={{ position: 'absolute', top: '80px', left: '15%', width: '60px', height: '20px', borderRadius: '10px', background: isDawn ? 'rgba(255,200,160,0.7)' : 'rgba(255,255,255,0.75)' }} />
@@ -143,7 +143,6 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
           </>
         )}
 
-        {/* Midnight amber moon */}
         {isNight && (
           <div style={{
             position: 'absolute', top: '20px', right: '20%',
@@ -154,7 +153,6 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
           }} />
         )}
 
-        {/* Window frame overlay */}
         <div style={{
           position: 'absolute', inset: 0,
           border: '8px solid rgba(0,0,0,0.3)',
@@ -163,7 +161,7 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
 
         <div style={{
           position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)',
-          fontSize: '14px', fontFamily: '"Press Start 2P", monospace',
+          fontSize: '14px', fontFamily: '"Space Mono", monospace',
           color: 'rgba(255,255,255,0.9)',
           textShadow: '1px 1px 4px rgba(0,0,0,0.8)',
         }}>
@@ -173,7 +171,6 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4">
-        {/* Quote */}
         <div style={{
           background: dsTheme.glass,
           border: `1px solid ${dsTheme.glassBorder}`,
@@ -182,11 +179,10 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
           marginBottom: '16px',
           fontStyle: 'italic',
         }}>
-          <p style={{ fontSize: '12px', color: dsTheme.text, marginBottom: '6px' }}>"{content.quote}"</p>
-          <p style={{ fontSize: '10px', color: dsTheme.textMuted }}>— {content.quoteBy}</p>
+          <p style={{ fontSize: '12px', color: dsTheme.text, marginBottom: '6px' }}>&ldquo;{content.quote}&rdquo;</p>
+          <p style={{ fontSize: '10px', color: dsTheme.textMuted }}>&mdash; {content.quoteBy}</p>
         </div>
 
-        {/* Suggestions */}
         <div style={{ fontSize: '10px', fontWeight: 'bold', color: dsTheme.accent1, fontFamily: '"Space Mono", monospace', marginBottom: '8px' }}>
           {content.emoji} {content.subheading}
         </div>
@@ -200,7 +196,6 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
                 background: i % 2 === 0 ? dsTheme.glass : 'transparent',
                 border: `1px solid ${dsTheme.glassBorder}`,
                 fontSize: '11px', color: dsTheme.text,
-                cursor: 'default',
               }}
             >
               <span style={{ fontSize: '18px' }}>{s.icon}</span>
@@ -209,13 +204,6 @@ export default function WindowPanel({ timeOfDay, theme, dsTheme }: { timeOfDay: 
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.3; transform: scale(0.8); }
-        }
-      `}</style>
     </div>
   );
 }
