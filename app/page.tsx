@@ -8,6 +8,7 @@ import NotesCanvas from '../components/NotesCanvas';
 import ChatPanel from '../components/ChatPanel';
 import { useTimeOfDay } from '../hooks/useTimeOfDay';
 import { useDevicePerformance } from '../hooks/useDevicePerformance';
+import { useIsMobile } from '../hooks/useIsMobile';
 import type { ActivePanel } from '../types';
 
 type PanelKey = NonNullable<ActivePanel>;
@@ -23,6 +24,7 @@ const PANEL_KEYS = Object.keys(PANELS) as PanelKey[];
 export default function Page() {
   const { timeOfDay, theme, dsTheme } = useTimeOfDay();
   const perfTier = useDevicePerformance();
+  const isMobile = useIsMobile();
 
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -47,14 +49,19 @@ export default function Page() {
   const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
   const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
 
+  const taskbarHeight = isMobile ? '48px' : '32px';
   const taskBtnBase: React.CSSProperties = {
-    height: '24px', padding: '0 10px',
+    height: isMobile ? '36px' : '24px',
+    padding: isMobile ? '0 12px' : '0 10px',
     border: '2px solid',
-    cursor: 'pointer', fontSize: '10px',
+    cursor: 'pointer',
+    fontSize: isMobile ? '18px' : '10px',
     fontFamily: '"Space Mono", monospace',
     display: 'flex', alignItems: 'center', gap: '4px',
     color: dsTheme.text,
     whiteSpace: 'nowrap',
+    minWidth: isMobile ? '44px' : undefined,
+    justifyContent: isMobile ? 'center' : undefined,
   };
 
   return (
@@ -99,39 +106,44 @@ export default function Page() {
 
       {/* Taskbar */}
       <div style={{
-        height: '32px', flexShrink: 0,
+        height: taskbarHeight, flexShrink: 0,
         background: dsTheme.surfaceSolid,
         border: '2px solid', borderColor: bevel,
         display: 'flex', alignItems: 'center',
         paddingLeft: '4px', paddingRight: '8px', gap: '4px',
         transition: 'background 1.5s, border-color 1.5s',
       }}>
-        {/* Brand */}
-        <button style={{
-          ...taskBtnBase,
-          background: dsTheme.titleBar,
-          borderColor: bevel,
-          color: dsTheme.titleText,
-          fontWeight: 700,
-          letterSpacing: '0.03em',
-        }}>
-          🏠 Room
-        </button>
-
-        <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
+        {/* Brand — hidden on mobile to save space */}
+        {!isMobile && (
+          <>
+            <button style={{
+              ...taskBtnBase,
+              background: dsTheme.titleBar,
+              borderColor: bevel,
+              color: dsTheme.titleText,
+              fontWeight: 700,
+              letterSpacing: '0.03em',
+            }}>
+              🏠 Room
+            </button>
+            <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
+          </>
+        )}
 
         {/* Panel buttons */}
         {PANEL_KEYS.map(key => (
           <button
             key={key}
             onClick={() => togglePanel(key)}
+            title={PANELS[key].title}
             style={{
               ...taskBtnBase,
               background: activePanel === key ? dsTheme.glass : dsTheme.chromeLight,
               borderColor: activePanel === key ? bevelIn : bevel,
             }}
           >
-            {PANELS[key].icon} {PANELS[key].title}
+            {PANELS[key].icon}
+            {!isMobile && ` ${PANELS[key].title}`}
           </button>
         ))}
 
@@ -140,23 +152,28 @@ export default function Page() {
         {/* Chat */}
         <button
           onClick={() => setChatOpen(o => !o)}
+          title="Chat"
           style={{
             ...taskBtnBase,
             background: chatOpen ? dsTheme.glass : dsTheme.chromeLight,
             borderColor: chatOpen ? bevelIn : bevel,
           }}
         >
-          💬 Chat
+          💬{!isMobile && ' Chat'}
         </button>
 
-        <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
+        {!isMobile && (
+          <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
+        )}
 
         {/* Clock */}
         <div style={{
-          padding: '0 8px', height: '22px',
+          padding: isMobile ? '0 6px' : '0 8px',
+          height: isMobile ? '34px' : '22px',
           border: '1px solid', borderColor: bevelIn,
           display: 'flex', alignItems: 'center',
-          fontSize: '10px', fontFamily: '"Space Mono", monospace',
+          fontSize: isMobile ? '11px' : '10px',
+          fontFamily: '"Space Mono", monospace',
           color: dsTheme.text, gap: '4px',
         }}>
           {theme.icon} {clockStr}
