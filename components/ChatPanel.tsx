@@ -4,6 +4,7 @@ import type { ChatMessage } from '../types';
 import type { DSTheme } from '../lib/design-system';
 import Btn from './Btn';
 import Win95Input from './Win95Input';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 function getOrCreateUsername(): string {
   if (typeof window === 'undefined') return 'Guest';
@@ -19,6 +20,7 @@ function formatTime(ts: number) {
 }
 
 export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; dsTheme: DSTheme }) {
+  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [username, setUsername] = useState('Guest');
@@ -65,8 +67,11 @@ export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; d
   return (
     <div style={{
       position: 'fixed',
-      bottom: '38px', right: '12px',
-      width: '320px', height: '420px',
+      bottom: isMobile ? '48px' : '38px',
+      right: isMobile ? '8px' : '12px',
+      left: isMobile ? '8px' : 'auto',
+      width: isMobile ? 'auto' : '320px',
+      height: isMobile ? 'min(420px, calc(100dvh - 120px))' : '420px',
       zIndex: 200,
       display: 'flex', flexDirection: 'column',
       border: '2px solid', borderColor: bevel,
@@ -77,15 +82,16 @@ export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; d
     }}>
       {/* Title bar */}
       <div style={{
-        height: '26px', background: dsTheme.titleBar,
+        height: isMobile ? '40px' : '26px',
+        background: dsTheme.titleBar,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingLeft: '6px', paddingRight: '4px', flexShrink: 0,
+        paddingLeft: '10px', paddingRight: '6px', flexShrink: 0,
       }}>
-        <div style={{ color: dsTheme.titleText, fontSize: '10px', fontFamily: '"Space Mono", monospace', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700, textShadow: '1px 1px 0 rgba(0,0,0,0.4)' }}>
+        <div style={{ color: dsTheme.titleText, fontSize: isMobile ? '13px' : '10px', fontFamily: '"Space Mono", monospace', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, textShadow: '1px 1px 0 rgba(0,0,0,0.4)' }}>
           💬 Chat
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: online ? '#4ade80' : dsTheme.textMuted, display: 'inline-block', boxShadow: online ? '0 0 4px #4ade80' : 'none' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: online ? '#4ade80' : dsTheme.textMuted, display: 'inline-block', boxShadow: online ? '0 0 4px #4ade80' : 'none' }} />
         </div>
-        <button onClick={onClose} style={{ width: '18px', height: '18px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, fontSize: '9px', fontWeight: 'bold', cursor: 'pointer', lineHeight: 1, color: dsTheme.chromeDark }}>✕</button>
+        <button onClick={onClose} style={{ width: isMobile ? '32px' : '18px', height: isMobile ? '32px' : '18px', background: dsTheme.chromeLight, border: '2px solid', borderColor: bevel, fontSize: isMobile ? '13px' : '9px', fontWeight: 'bold', cursor: 'pointer', lineHeight: 1, color: dsTheme.chromeDark, borderRadius: isMobile ? '4px' : undefined }}>✕</button>
       </div>
 
       {/* Username bar */}
