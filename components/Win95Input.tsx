@@ -7,9 +7,10 @@ interface Win95InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
   style?: React.CSSProperties;
 }
 
-export default function Win95Input({ dsTheme, style, ...rest }: Win95InputProps) {
-  return (
+const Win95Input = React.forwardRef<HTMLInputElement, Win95InputProps>(
+  ({ dsTheme, style, ...rest }, ref) => (
     <input
+      ref={ref}
       style={{
         fontFamily: '"Space Mono", monospace',
         fontSize: '11px',
@@ -26,5 +27,9 @@ export default function Win95Input({ dsTheme, style, ...rest }: Win95InputProps)
       }}
       {...rest}
     />
-  );
-}
+  )
+);
+
+Win95Input.displayName = 'Win95Input';
+
+export default Win95Input;
