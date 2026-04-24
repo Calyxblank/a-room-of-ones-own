@@ -45,6 +45,7 @@ function compressImage(dataUrl: string, maxPx = 400): Promise<string> {
 export default function Room({ timeOfDay, dsTheme, roomId, onOpen, reduceAnimations }: RoomProps) {
   const isMobile = useIsMobile();
   const [photos, setPhotos] = useState<Record<number, RoomPhoto>>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileRefs = [
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -78,13 +79,15 @@ export default function Room({ timeOfDay, dsTheme, roomId, onOpen, reduceAnimati
     setPhotos(prev => { const next = { ...prev }; delete next[frame]; return next; });
   };
 
-  return (
-    <div style={{
-      position: 'relative', width: '100%', height: '100%', overflow: 'hidden',
-      backgroundImage: `url(${ROOM_IMAGES[timeOfDay]})`,
-      backgroundSize: 'cover', backgroundPosition: 'center',
-      imageRendering: 'pixelated',
-    }}>
+  const bgStyle: React.CSSProperties = {
+    backgroundImage: `url(${ROOM_IMAGES[timeOfDay]})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    imageRendering: 'pixelated',
+  };
+
+  const children = (
+    <>
       <div style={{
         position: 'absolute', inset: 0,
         background: OVERLAY[timeOfDay],
@@ -134,8 +137,81 @@ export default function Room({ timeOfDay, dsTheme, roomId, onOpen, reduceAnimati
         pointerEvents: 'none',
         border: '1px solid rgba(255,255,255,0.12)',
       }}>
-        {isMobile ? 'Tap objects to interact' : 'Click objects to interact'}
+        {isMobile ? '← Swipe to explore · Tap objects' : 'Click objects to interact'}
       </div>
+
+      {isMobile && <SwipeHint scrollContainerRef={scrollContainerRef} />}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <div
+        ref={scrollContainerRef}
+        className="room-scroll-container"
+        style={{
+          width: '100%', height: '100%',
+          overflowX: 'scroll', overflowY: 'hidden',
+          WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
+        }}
+      >
+        <div style={{ position: 'relative', width: '200vw', height: '100%', ...bgStyle }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...bgStyle }}>
+      {children}
+    </div>
+  );
+}
+
+function SwipeHint({ scrollContainerRef }: { scrollContainerRef: React.RefObject<HTMLDivElement> }) {
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('room_swipe_hint_seen');
+  });
+
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => {
+      setVisible(false);
+      localStorage.setItem('room_swipe_hint_seen', '1');
+    }, 3000);
+    const el = scrollContainerRef.current;
+    const onScroll = () => {
+      setVisible(false);
+      localStorage.setItem('room_swipe_hint_seen', '1');
+    };
+    el?.addEventListener('scroll', onScroll, { once: true, passive: true });
+    return () => {
+      clearTimeout(timer);
+      el?.removeEventListener('scroll', onScroll);
+    };
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: '48px',
+      left: '25%',
+      background: 'rgba(0,0,0,0.65)',
+      color: 'rgba(255,255,255,0.92)',
+      fontSize: '11px',
+      fontFamily: '"Space Mono", monospace',
+      padding: '7px 16px',
+      border: '1px solid rgba(255,255,255,0.18)',
+      pointerEvents: 'none',
+      whiteSpace: 'nowrap',
+      zIndex: 20,
+      letterSpacing: '0.03em',
+    }}>
+      ← swipe to explore →
     </div>
   );
 }
@@ -191,6 +267,8 @@ function PhotoFrame({ photo, style, dsTheme, onUpload, onRemove, reduceAnimation
   );
 }
 
+const TAP_THRESHOLD = 8;
+
 function Hotspot({ onClick, label, emoji, style, dsTheme, reduceAnimations }: {
   onClick: () => void;
   label: string;
@@ -201,15 +279,34 @@ function Hotspot({ onClick, label, emoji, style, dsTheme, reduceAnimations }: {
 }) {
   const [active, setActive] = React.useState(false);
   const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
     setActive(true);
   };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - touchStartRef.current.x);
+    const dy = Math.abs(t.clientY - touchStartRef.current.y);
+    if (dx >= TAP_THRESHOLD || dy >= TAP_THRESHOLD) setActive(false);
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault();
+    const start = touchStartRef.current;
     setActive(false);
-    onClick();
+    touchStartRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = Math.abs(t.clientX - start.x);
+    const dy = Math.abs(t.clientY - start.y);
+    if (dx < TAP_THRESHOLD && dy < TAP_THRESHOLD) {
+      e.preventDefault(); // suppress synthetic click to avoid double-fire
+      onClick();
+    }
   };
 
   return (
@@ -218,8 +315,9 @@ function Hotspot({ onClick, label, emoji, style, dsTheme, reduceAnimations }: {
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onTouchCancel={() => setActive(false)}
+      onTouchCancel={() => { setActive(false); touchStartRef.current = null; }}
       style={{
         ...style, cursor: 'pointer', zIndex: 5, background: 'transparent',
         outline: active ? `3px solid ${dsTheme.accent4}` : '3px solid transparent',

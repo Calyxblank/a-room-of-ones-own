@@ -94,4 +94,11 @@ button, [role="button"] {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  .room-scroll-container {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-x: none;
+  }
+  .room-scroll-container::-webkit-scrollbar { display: none; }
 }
