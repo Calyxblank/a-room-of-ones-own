@@ -1,183 +1,164 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
-import Room from '../components/Room';
-import Win95Window from '../components/Win95Window';
-import TurntablePanel from '../components/TurntablePanel';
-import WindowPanel from '../components/WindowPanel';
-import NotesCanvas from '../components/NotesCanvas';
-import ChatPanel from '../components/ChatPanel';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTimeOfDay } from '../hooks/useTimeOfDay';
-import { useDevicePerformance } from '../hooks/useDevicePerformance';
 import { useIsMobile } from '../hooks/useIsMobile';
-import type { ActivePanel } from '../types';
 
-type PanelKey = NonNullable<ActivePanel>;
+function generateRoomId(): string {
+  return Math.random().toString(36).slice(2, 8);
+}
 
-const PANELS: Record<PanelKey, { title: string; icon: string; width: string; height: string; defaultX: number; defaultY: number }> = {
-  turntable: { title: 'Turntable',    icon: '🎵', width: '640px', height: '540px', defaultX: 80,  defaultY: 50 },
-  window:    { title: 'Window View',  icon: '🪟', width: '500px', height: '480px', defaultX: 100, defaultY: 50 },
-  desk:      { title: 'Sticky Notes', icon: '📝', width: '760px', height: '540px', defaultX: 60,  defaultY: 40 },
-};
-
-const PANEL_KEYS = Object.keys(PANELS) as PanelKey[];
-
-export default function Page() {
-  const { timeOfDay, theme, dsTheme } = useTimeOfDay();
-  const perfTier = useDevicePerformance();
+export default function LobbyPage() {
+  const { dsTheme, theme } = useTimeOfDay();
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const [joinCode, setJoinCode] = useState('');
+  const [error, setError] = useState('');
 
-  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [clockStr, setClockStr] = useState(() => {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-  });
+  const createRoom = () => {
+    router.push(`/room/${generateRoomId()}`);
+  };
 
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      setClockStr(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
-    };
-    const id = setInterval(tick, 15_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const togglePanel = useCallback((panel: ActivePanel) => {
-    setActivePanel(prev => (prev === panel ? null : panel));
-  }, []);
+  const joinRoom = () => {
+    const raw = joinCode.trim().toLowerCase();
+    if (!raw) { setError('Enter a room code or URL'); return; }
+    const match = raw.match(/room\/([a-z0-9]+)/);
+    const id = match ? match[1] : raw;
+    if (!/^[a-z0-9]{4,10}$/.test(id)) { setError('Invalid room code'); return; }
+    router.push(`/room/${id}`);
+  };
 
   const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
   const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
 
-  const taskbarHeight = isMobile ? '48px' : '32px';
-  const taskBtnBase: React.CSSProperties = {
-    height: isMobile ? '36px' : '24px',
-    padding: isMobile ? '0 12px' : '0 10px',
-    border: '2px solid',
-    cursor: 'pointer',
-    fontSize: isMobile ? '18px' : '10px',
+  const inputStyle: React.CSSProperties = {
     fontFamily: '"Space Mono", monospace',
-    display: 'flex', alignItems: 'center', gap: '4px',
+    fontSize: '11px',
+    background: dsTheme.glass,
     color: dsTheme.text,
-    whiteSpace: 'nowrap',
-    minWidth: isMobile ? '44px' : undefined,
-    justifyContent: isMobile ? 'center' : undefined,
+    backdropFilter: dsTheme.blur,
+    border: '2px solid',
+    borderColor: `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`,
+    padding: '8px 10px',
+    width: '100%',
+    outline: 'none',
+    boxSizing: 'border-box',
   };
 
   return (
     <div style={{
       width: '100vw', height: '100dvh',
-      display: 'flex', flexDirection: 'column',
-      overflow: 'hidden',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: '"Space Mono", monospace',
+      background: dsTheme.surfaceSolid,
+      transition: 'background 1.5s',
     }}>
-      {/* Room fills all space above taskbar */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <Room
-          theme={theme}
-          timeOfDay={timeOfDay}
-          dsTheme={dsTheme}
-          onOpen={togglePanel}
-          reduceAnimations={perfTier === 'low'}
-        />
-
-        {activePanel && (
-          <div className="panel-appear">
-            <Win95Window
-              key={activePanel}
-              title={PANELS[activePanel].title}
-              icon={PANELS[activePanel].icon}
-              onClose={() => setActivePanel(null)}
-              width={PANELS[activePanel].width}
-              height={PANELS[activePanel].height}
-              defaultX={PANELS[activePanel].defaultX}
-              defaultY={PANELS[activePanel].defaultY}
-              dsTheme={dsTheme}
-            >
-              {activePanel === 'turntable' && <TurntablePanel dsTheme={dsTheme} />}
-              {activePanel === 'window'    && <WindowPanel timeOfDay={timeOfDay} theme={theme} dsTheme={dsTheme} />}
-              {activePanel === 'desk'      && <NotesCanvas perfTier={perfTier} dsTheme={dsTheme} />}
-            </Win95Window>
-          </div>
-        )}
-
-        {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} dsTheme={dsTheme} />}
-      </div>
-
-      {/* Taskbar */}
       <div style={{
-        height: taskbarHeight, flexShrink: 0,
-        background: dsTheme.surfaceSolid,
+        width: isMobile ? '92vw' : '360px',
         border: '2px solid', borderColor: bevel,
-        display: 'flex', alignItems: 'center',
-        paddingLeft: '4px', paddingRight: '8px', gap: '4px',
-        transition: 'background 1.5s, border-color 1.5s',
+        borderRadius: '4px',
+        boxShadow: `4px 4px 0 ${dsTheme.chromeDark}, 0 12px 40px rgba(0,0,0,0.3)`,
+        background: dsTheme.glass,
+        backdropFilter: dsTheme.blur,
+        WebkitBackdropFilter: dsTheme.blur,
+        overflow: 'hidden',
       }}>
-        {/* Brand — hidden on mobile to save space */}
-        {!isMobile && (
-          <>
-            <button style={{
-              ...taskBtnBase,
-              background: dsTheme.titleBar,
-              borderColor: bevel,
-              color: dsTheme.titleText,
-              fontWeight: 700,
+        {/* Title bar */}
+        <div style={{
+          background: dsTheme.titleBar,
+          padding: '8px 12px',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          minHeight: '36px',
+        }}>
+          <span style={{ fontSize: '16px' }}>🏠</span>
+          <span style={{
+            color: dsTheme.titleText, fontSize: '12px', fontWeight: 700,
+            letterSpacing: '0.05em', textShadow: '1px 1px 0 rgba(0,0,0,0.4)',
+          }}>
+            A Room of One&apos;s Own
+          </span>
+          <span style={{ marginLeft: 'auto', fontSize: '14px' }}>{theme.icon}</span>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* Create */}
+          <section style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '9px', color: dsTheme.textMuted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+              New room
+            </div>
+            <button onClick={createRoom} style={{
+              padding: '11px 16px',
+              border: '2px solid', borderColor: bevel,
+              background: dsTheme.accent1,
+              color: '#fff',
+              fontFamily: '"Space Mono", monospace',
+              fontSize: '12px', fontWeight: 700,
+              cursor: 'pointer', width: '100%',
               letterSpacing: '0.03em',
             }}>
-              🏠 Room
+              ✨ Create a new room
             </button>
-            <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
-          </>
-        )}
+          </section>
 
-        {/* Panel buttons */}
-        {PANEL_KEYS.map(key => (
-          <button
-            key={key}
-            onClick={() => togglePanel(key)}
-            title={PANELS[key].title}
-            style={{
-              ...taskBtnBase,
-              background: activePanel === key ? dsTheme.glass : dsTheme.chromeLight,
-              borderColor: activePanel === key ? bevelIn : bevel,
-            }}
-          >
-            {PANELS[key].icon}
-            {!isMobile && ` ${PANELS[key].title}`}
-          </button>
-        ))}
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ flex: 1, height: '1px', background: dsTheme.bevelDark }} />
+            <span style={{ fontSize: '9px', color: dsTheme.textMuted }}>or join existing</span>
+            <div style={{ flex: 1, height: '1px', background: dsTheme.bevelDark }} />
+          </div>
 
-        <div style={{ flex: 1 }} />
+          {/* Join */}
+          <section style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '9px', color: dsTheme.textMuted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+              Join a room
+            </div>
+            <input
+              value={joinCode}
+              onChange={e => { setJoinCode(e.target.value); setError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') joinRoom(); }}
+              placeholder="Paste room URL or code…"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              style={inputStyle}
+            />
+            {error && (
+              <div style={{ fontSize: '10px', color: dsTheme.accent2 }}>{error}</div>
+            )}
+            <button onClick={joinRoom} style={{
+              padding: '11px 16px',
+              border: '2px solid', borderColor: bevel,
+              background: dsTheme.chromeLight,
+              color: dsTheme.text,
+              fontFamily: '"Space Mono", monospace',
+              fontSize: '11px',
+              cursor: 'pointer', width: '100%',
+            }}>
+              → Join room
+            </button>
+          </section>
 
-        {/* Chat */}
-        <button
-          onClick={() => setChatOpen(o => !o)}
-          title="Chat"
-          style={{
-            ...taskBtnBase,
-            background: chatOpen ? dsTheme.glass : dsTheme.chromeLight,
-            borderColor: chatOpen ? bevelIn : bevel,
-          }}
-        >
-          💬{!isMobile && ' Chat'}
-        </button>
+          {/* Footer hint */}
+          <div style={{ fontSize: '9px', color: dsTheme.textMuted, textAlign: 'center', lineHeight: 1.7, borderTop: `1px solid ${dsTheme.bevelDark}`, paddingTop: '12px' }}>
+            Rooms are ephemeral — share the link to invite others.<br />
+            Everything resets when the server sleeps. 🌙
+          </div>
 
-        {!isMobile && (
-          <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
-        )}
-
-        {/* Clock */}
-        <div style={{
-          padding: isMobile ? '0 6px' : '0 8px',
-          height: isMobile ? '34px' : '22px',
-          border: '1px solid', borderColor: bevelIn,
-          display: 'flex', alignItems: 'center',
-          fontSize: isMobile ? '11px' : '10px',
-          fontFamily: '"Space Mono", monospace',
-          color: dsTheme.text, gap: '4px',
-        }}>
-          {theme.icon} {clockStr}
         </div>
+      </div>
+
+      {/* Sunken clock */}
+      <div style={{
+        position: 'fixed', bottom: '12px', right: '14px',
+        padding: '4px 10px',
+        border: '1px solid', borderColor: bevelIn,
+        fontSize: '10px', color: dsTheme.text,
+        fontFamily: '"Space Mono", monospace',
+        background: dsTheme.surfaceSolid,
+      }}>
+        {theme.icon} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
       </div>
     </div>
   );

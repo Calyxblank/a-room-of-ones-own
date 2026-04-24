@@ -10,28 +10,42 @@ interface ChatMessage {
   timestamp: number;
 }
 
-const messages: ChatMessage[] = [];
-const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
+type RoomStore = {
+  messages: ChatMessage[];
+  clients: Set<ReadableStreamDefaultController<Uint8Array>>;
+};
+
+const rooms = new Map<string, RoomStore>();
 const encoder = new TextEncoder();
 
-function broadcast(payload: string) {
+function getRoom(roomId: string): RoomStore {
+  if (!rooms.has(roomId)) {
+    rooms.set(roomId, { messages: [], clients: new Set() });
+  }
+  return rooms.get(roomId)!;
+}
+
+function broadcast(room: RoomStore, payload: string) {
   const bytes = encoder.encode(`data: ${payload}\n\n`);
-  Array.from(clients).forEach(ctrl => {
+  room.clients.forEach(ctrl => {
     try {
       ctrl.enqueue(bytes);
     } catch {
-      clients.delete(ctrl);
+      room.clients.delete(ctrl);
     }
   });
 }
 
 export async function GET(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const room = getRoom(roomId);
+
   const stream = new ReadableStream<Uint8Array>({
     start(ctrl) {
-      clients.add(ctrl);
-      ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'history', messages })}\n\n`));
+      room.clients.add(ctrl);
+      ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'history', messages: room.messages })}\n\n`));
       req.signal.addEventListener('abort', () => {
-        clients.delete(ctrl);
+        room.clients.delete(ctrl);
         try { ctrl.close(); } catch { /* already closed */ }
       });
     },
@@ -48,7 +62,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const room = getRoom(roomId);
   const body = await req.json();
+
   const msg: ChatMessage = {
     id: Date.now(),
     text: String(body.text ?? '').slice(0, 400),
@@ -56,8 +73,9 @@ export async function POST(req: NextRequest) {
     timestamp: Date.now(),
   };
   if (!msg.text.trim()) return Response.json({ ok: false }, { status: 400 });
-  messages.push(msg);
-  if (messages.length > 200) messages.shift();
-  broadcast(JSON.stringify({ type: 'message', message: msg }));
+
+  room.messages.push(msg);
+  if (room.messages.length > 200) room.messages.shift();
+  broadcast(room, JSON.stringify({ type: 'message', message: msg }));
   return Response.json({ ok: true });
 }

@@ -11,28 +11,42 @@ export interface SharedPlaylist {
   addedAt: number;
 }
 
-let playlists: SharedPlaylist[] = [];
-const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
+type RoomStore = {
+  playlists: SharedPlaylist[];
+  clients: Set<ReadableStreamDefaultController<Uint8Array>>;
+};
+
+const rooms = new Map<string, RoomStore>();
 const encoder = new TextEncoder();
 
-function broadcast(payload: string) {
+function getRoom(roomId: string): RoomStore {
+  if (!rooms.has(roomId)) {
+    rooms.set(roomId, { playlists: [], clients: new Set() });
+  }
+  return rooms.get(roomId)!;
+}
+
+function broadcast(room: RoomStore, payload: string) {
   const bytes = encoder.encode(`data: ${payload}\n\n`);
-  Array.from(clients).forEach(ctrl => {
+  room.clients.forEach(ctrl => {
     try {
       ctrl.enqueue(bytes);
     } catch {
-      clients.delete(ctrl);
+      room.clients.delete(ctrl);
     }
   });
 }
 
 export async function GET(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const room = getRoom(roomId);
+
   const stream = new ReadableStream<Uint8Array>({
     start(ctrl) {
-      clients.add(ctrl);
-      ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', playlists })}\n\n`));
+      room.clients.add(ctrl);
+      ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'init', playlists: room.playlists })}\n\n`));
       req.signal.addEventListener('abort', () => {
-        clients.delete(ctrl);
+        room.clients.delete(ctrl);
         try { ctrl.close(); } catch { /* already closed */ }
       });
     },
@@ -49,10 +63,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const room = getRoom(roomId);
   const body = await req.json();
-  const rawUrl = String(body.url ?? '');
 
-  // Accept playlist/XXXXXX or album/XXXXXX
+  const rawUrl = String(body.url ?? '');
   const match = rawUrl.match(/(?:playlist|album)\/([A-Za-z0-9]+)/);
   if (!match) {
     return Response.json({ error: 'Paste a Spotify playlist or album URL' }, { status: 400 });
@@ -66,16 +81,19 @@ export async function POST(req: NextRequest) {
     addedAt: Date.now(),
   };
 
-  playlists.unshift(pl);
-  if (playlists.length > 20) playlists = playlists.slice(0, 20);
+  room.playlists.unshift(pl);
+  if (room.playlists.length > 20) room.playlists = room.playlists.slice(0, 20);
 
-  broadcast(JSON.stringify({ type: 'add', playlist: pl }));
+  broadcast(room, JSON.stringify({ type: 'add', playlist: pl }));
   return Response.json({ ok: true, playlist: pl });
 }
 
 export async function DELETE(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const room = getRoom(roomId);
   const { id } = await req.json();
-  playlists = playlists.filter(p => p.id !== id);
-  broadcast(JSON.stringify({ type: 'remove', id }));
+
+  room.playlists = room.playlists.filter(p => p.id !== id);
+  broadcast(room, JSON.stringify({ type: 'remove', id }));
   return Response.json({ ok: true });
 }
