@@ -58,31 +58,36 @@ export default function Win95Window({
     ? Math.max(0, Math.min(pos.y, window.innerHeight - 300))
     : pos.y;
 
+  const mobileW = `min(${width}, 92vw)`;
+  const mobileH = `min(${height}, 75dvh)`;
+
   return (
     <>
-      {/* Backdrop — only on desktop (mobile is full-screen, no need) */}
-      {!isMobile && (
-        <div
-          className="fixed inset-0 z-40"
-          style={{ background: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(2px)' }}
-          onClick={onClose}
-        />
-      )}
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40"
+        style={{ background: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(2px)' }}
+        onClick={onClose}
+      />
 
       {/* Window */}
       <div
         ref={winRef}
         className="fixed z-50 flex flex-col"
         style={isMobile ? {
-          inset: 0,
-          borderRadius: 0,
+          width: mobileW,
+          height: mobileH,
+          left: '50%',
+          top: '6dvh',
+          transform: 'translateX(-50%)',
           cursor: 'default',
+          border: '2px solid', borderColor: bevel,
+          borderRadius: '4px',
           overflow: 'hidden',
-          boxShadow: 'none',
+          boxShadow: `3px 3px 0 ${dsTheme.chromeDark}, 0 8px 32px rgba(0,0,0,0.22)`,
           background: dsTheme.glass,
           backdropFilter: dsTheme.blur,
           WebkitBackdropFilter: dsTheme.blur,
-          border: 'none',
         } : {
           width: `min(${width}, 96vw)`,
           height: `min(${height}, 90vh)`,
@@ -147,8 +152,8 @@ export default function Win95Window({
         <div
           className="flex-1 overflow-auto"
           style={{
-            border: isMobile ? 'none' : `2px solid ${bevelIn}`,
-            margin: isMobile ? 0 : '4px',
+            border: `2px solid ${bevelIn}`,
+            margin: '4px',
             background: dsTheme.surface,
           }}
         >

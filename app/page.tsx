@@ -66,7 +66,7 @@ export default function Page() {
 
   return (
     <div style={{
-      width: '100vw', height: '100vh',
+      width: '100vw', height: '100dvh',
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
       fontFamily: '"Space Mono", monospace',
