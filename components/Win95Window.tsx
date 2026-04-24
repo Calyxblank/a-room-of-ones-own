@@ -11,20 +11,13 @@ interface Win95WindowProps {
   height?: string;
   defaultX?: number;
   defaultY?: number;
-  className?: string;
   dsTheme: DSTheme;
 }
 
 export default function Win95Window({
-  title,
-  icon = '🖥',
-  onClose,
-  children,
-  width = '680px',
-  height = '520px',
-  defaultX = 60,
-  defaultY = 40,
-  className = '',
+  title, icon = '🖥', onClose, children,
+  width = '680px', height = '520px',
+  defaultX = 60, defaultY = 40,
   dsTheme,
 }: Win95WindowProps) {
   const [pos, setPos] = useState({ x: defaultX, y: defaultY });
@@ -68,15 +61,14 @@ export default function Win95Window({
       {/* Window */}
       <div
         ref={winRef}
-        className={`fixed z-50 flex flex-col ${className}`}
+        className="fixed z-50 flex flex-col"
         style={{
           width: `min(${width}, 96vw)`,
           height: `min(${height}, 90vh)`,
           left: window.innerWidth < 640 ? 0 : Math.max(0, Math.min(pos.x, window.innerWidth - 400)),
           top: window.innerWidth < 640 ? 0 : Math.max(0, Math.min(pos.y, window.innerHeight - 300)),
           cursor: dragging ? 'grabbing' : 'default',
-          border: '2px solid',
-          borderColor: bevel,
+          border: '2px solid', borderColor: bevel,
           borderRadius: '4px',
           overflow: 'hidden',
           boxShadow: `3px 3px 0 ${dsTheme.chromeDark}, 0 8px 32px rgba(0,0,0,0.22)`,
@@ -100,24 +92,23 @@ export default function Win95Window({
             display: 'flex', alignItems: 'center', gap: '5px',
             color: dsTheme.titleText,
             fontSize: '11px',
-            fontFamily: '"Space Mono", "Press Start 2P", monospace',
+            fontFamily: '"Space Mono", monospace',
             fontWeight: 700,
             letterSpacing: '0.05em',
             textShadow: '1px 1px 0 rgba(0,0,0,0.4)',
           }}>
             <span style={{ fontSize: '13px' }}>{icon}</span>
-            <span className="truncate max-w-xs">{title}</span>
+            <span>{title}</span>
           </div>
           <div style={{ display: 'flex', gap: '2px' }}>
-            {['□', '✕'].map((s, i) => (
+            {(['□', '✕'] as const).map((s, i) => (
               <button
                 key={i}
                 onClick={i === 1 ? onClose : undefined}
                 style={{
                   width: '18px', height: '16px',
                   background: dsTheme.chromeLight,
-                  border: '2px solid',
-                  borderColor: bevel,
+                  border: '2px solid', borderColor: bevel,
                   fontSize: '9px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer',
@@ -129,55 +120,16 @@ export default function Win95Window({
           </div>
         </div>
 
-        {/* Menu bar */}
-        <div style={{
-          height: '22px',
-          background: dsTheme.surfaceSolid,
-          borderBottom: `1px solid ${dsTheme.bevelDark}`,
-          display: 'flex', alignItems: 'center',
-          paddingLeft: '4px',
-          fontSize: '11px',
-          fontFamily: '"Space Mono", monospace',
-          flexShrink: 0,
-        }}>
-          {['File', 'View', 'Help'].map(m => (
-            <button key={m} style={{
-              padding: '0 8px', height: '20px',
-              background: 'transparent', border: 'none',
-              cursor: 'pointer', fontSize: '11px',
-              fontFamily: '"Space Mono", monospace',
-              color: dsTheme.text,
-            }}>{m}</button>
-          ))}
-        </div>
-
         {/* Content */}
         <div
           className="flex-1 overflow-auto"
           style={{
-            border: '2px solid',
-            borderColor: bevelIn,
+            border: '2px solid', borderColor: bevelIn,
             margin: '4px',
             background: dsTheme.surface,
-            backdropFilter: dsTheme.blur,
           }}
         >
           {children}
-        </div>
-
-        {/* Status bar */}
-        <div style={{
-          height: '20px',
-          background: dsTheme.surfaceSolid,
-          borderTop: `1px solid ${dsTheme.bevelDark}`,
-          display: 'flex', alignItems: 'center',
-          paddingLeft: '8px',
-          fontFamily: '"Space Mono", monospace',
-          fontSize: '10px',
-          color: dsTheme.textMuted,
-          flexShrink: 0,
-        }}>
-          Ready
         </div>
       </div>
     </>

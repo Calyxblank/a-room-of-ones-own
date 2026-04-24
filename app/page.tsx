@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Room from '../components/Room';
 import Win95Window from '../components/Win95Window';
 import TurntablePanel from '../components/TurntablePanel';
@@ -10,227 +10,158 @@ import { useTimeOfDay } from '../hooks/useTimeOfDay';
 import { useDevicePerformance } from '../hooks/useDevicePerformance';
 import type { ActivePanel } from '../types';
 
+type PanelKey = NonNullable<ActivePanel>;
+
+const PANELS: Record<PanelKey, { title: string; icon: string; width: string; height: string; defaultX: number; defaultY: number }> = {
+  turntable: { title: 'Turntable',    icon: '🎵', width: '640px', height: '540px', defaultX: 80,  defaultY: 50 },
+  window:    { title: 'Window View',  icon: '🪟', width: '500px', height: '480px', defaultX: 100, defaultY: 50 },
+  desk:      { title: 'Sticky Notes', icon: '📝', width: '760px', height: '540px', defaultX: 60,  defaultY: 40 },
+};
+
+const PANEL_KEYS = Object.keys(PANELS) as PanelKey[];
+
 export default function Page() {
-  const { timeOfDay, theme, dsTheme, currentHour } = useTimeOfDay();
+  const { timeOfDay, theme, dsTheme } = useTimeOfDay();
   const perfTier = useDevicePerformance();
+
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [clockStr, setClockStr] = useState(() => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  });
 
-  const openPanel = useCallback((panel: ActivePanel) => setActivePanel(panel), []);
-  const closePanel = useCallback(() => setActivePanel(null), []);
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setClockStr(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+    };
+    const id = setInterval(tick, 15_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const panelConfigs = {
-    turntable: { title: 'Turntable.exe', icon: '🎵', width: '680px', height: '520px', defaultX: 80, defaultY: 60 },
-    window:    { title: 'Window View',   icon: '🪟', width: '520px', height: '500px', defaultX: 100, defaultY: 50 },
-    desk:      { title: 'Sticky Notes',  icon: '📝', width: '780px', height: '560px', defaultX: 50, defaultY: 40 },
-  };
+  const togglePanel = useCallback((panel: ActivePanel) => {
+    setActivePanel(prev => (prev === panel ? null : panel));
+  }, []);
 
   const bevel = `${dsTheme.bevelLight} ${dsTheme.bevelDark} ${dsTheme.bevelDark} ${dsTheme.bevelLight}`;
   const bevelIn = `${dsTheme.bevelDark} ${dsTheme.bevelLight} ${dsTheme.bevelLight} ${dsTheme.bevelDark}`;
+
+  const taskBtnBase: React.CSSProperties = {
+    height: '24px', padding: '0 10px',
+    border: '2px solid',
+    cursor: 'pointer', fontSize: '10px',
+    fontFamily: '"Space Mono", monospace',
+    display: 'flex', alignItems: 'center', gap: '4px',
+    color: dsTheme.text,
+    whiteSpace: 'nowrap',
+  };
 
   return (
     <div style={{
       width: '100vw', height: '100vh',
       display: 'flex', flexDirection: 'column',
-      background: dsTheme.bg,
       overflow: 'hidden',
-      fontFamily: '"Space Mono", "Press Start 2P", monospace',
-      transition: 'background 1.5s ease',
+      fontFamily: '"Space Mono", monospace',
     }}>
-      {/* ── Win95 App Chrome ── */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', flex: 1,
-        margin: '8px',
-        border: '2px solid', borderColor: bevel,
-        boxShadow: `3px 3px 0 ${dsTheme.chromeDark}`,
-        background: dsTheme.glass,
-        backdropFilter: dsTheme.blur,
-        WebkitBackdropFilter: dsTheme.blur,
-        overflow: 'hidden',
-        transition: 'border-color 1.5s, background 1.5s',
-      }}>
-        {/* Title bar */}
-        <div style={{
-          height: '28px',
-          background: dsTheme.titleBar,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          paddingLeft: '8px', paddingRight: '6px',
-          flexShrink: 0,
-          transition: 'background 1.5s',
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            color: dsTheme.titleText, fontSize: '11px',
-            fontFamily: '"Space Mono", monospace', fontWeight: 700,
-            letterSpacing: '0.05em',
-            textShadow: '1px 1px 0 rgba(0,0,0,0.4)',
-          }}>
-            <span style={{ fontSize: '14px' }}>🏠</span>
-            <span>A Room of One&apos;s Own</span>
-            <span style={{ fontSize: '9px', opacity: 0.7, marginLeft: '8px' }}>
-              {theme.icon} {theme.label} — {currentHour}:00
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '3px' }}>
-            {['─', '□', '✕'].map((s, i) => (
-              <div key={i} style={{
-                width: '18px', height: '18px',
-                background: dsTheme.chromeLight,
-                border: '1px solid', borderColor: bevel,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '9px', fontWeight: 'bold', cursor: 'pointer',
-                color: dsTheme.chromeDark,
-              }}>{s}</div>
-            ))}
-          </div>
-        </div>
+      {/* Room fills all space above taskbar */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        <Room
+          theme={theme}
+          timeOfDay={timeOfDay}
+          dsTheme={dsTheme}
+          onOpen={togglePanel}
+          reduceAnimations={perfTier === 'low'}
+        />
 
-        {/* Menu bar */}
-        <div style={{
-          height: '22px',
-          background: dsTheme.surfaceSolid,
-          borderBottom: `1px solid ${dsTheme.bevelDark}`,
-          display: 'flex', alignItems: 'center',
-          paddingLeft: '4px', gap: '2px',
-          flexShrink: 0, fontSize: '11px',
-          fontFamily: '"Space Mono", monospace',
-          transition: 'background 1.5s',
-        }}>
-          {['File', 'Edit', 'View', 'Room', 'Help'].map(m => (
-            <button key={m} style={{
-              padding: '0 8px', height: '20px',
-              background: 'transparent', border: 'none',
-              cursor: 'pointer', fontSize: '11px',
-              fontFamily: '"Space Mono", monospace',
-              color: dsTheme.text,
-            }}>{m}</button>
-          ))}
-        </div>
-
-        {/* Room content */}
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <Room
-            theme={theme}
-            timeOfDay={timeOfDay}
-            onOpen={openPanel}
-            reduceAnimations={perfTier === 'low'}
-          />
-
-          {activePanel && (
-            <div className="panel-appear">
-              <Win95Window
-                key={activePanel}
-                title={panelConfigs[activePanel].title}
-                icon={panelConfigs[activePanel].icon}
-                onClose={closePanel}
-                width={panelConfigs[activePanel].width}
-                height={panelConfigs[activePanel].height}
-                defaultX={panelConfigs[activePanel].defaultX}
-                defaultY={panelConfigs[activePanel].defaultY}
-                dsTheme={dsTheme}
-              >
-                {activePanel === 'turntable' && <TurntablePanel timeOfDay={timeOfDay} dsTheme={dsTheme} />}
-                {activePanel === 'window'    && <WindowPanel timeOfDay={timeOfDay} theme={theme} dsTheme={dsTheme} />}
-                {activePanel === 'desk'      && <NotesCanvas perfTier={perfTier} dsTheme={dsTheme} />}
-              </Win95Window>
-            </div>
-          )}
-        </div>
-
-        {/* Status bar */}
-        <div style={{
-          height: '22px',
-          background: dsTheme.surfaceSolid,
-          borderTop: `1px solid ${dsTheme.bevelDark}`,
-          display: 'flex', alignItems: 'center',
-          paddingLeft: '8px', gap: '16px',
-          flexShrink: 0, fontSize: '11px',
-          fontFamily: '"Space Mono", monospace',
-          color: dsTheme.textMuted,
-          transition: 'background 1.5s',
-        }}>
-          <div style={{ borderRight: `1px solid ${dsTheme.bevelDark}`, paddingRight: '12px' }}>
-            {theme.icon} {theme.label}
+        {activePanel && (
+          <div className="panel-appear">
+            <Win95Window
+              key={activePanel}
+              title={PANELS[activePanel].title}
+              icon={PANELS[activePanel].icon}
+              onClose={() => setActivePanel(null)}
+              width={PANELS[activePanel].width}
+              height={PANELS[activePanel].height}
+              defaultX={PANELS[activePanel].defaultX}
+              defaultY={PANELS[activePanel].defaultY}
+              dsTheme={dsTheme}
+            >
+              {activePanel === 'turntable' && <TurntablePanel dsTheme={dsTheme} />}
+              {activePanel === 'window'    && <WindowPanel timeOfDay={timeOfDay} theme={theme} dsTheme={dsTheme} />}
+              {activePanel === 'desk'      && <NotesCanvas perfTier={perfTier} dsTheme={dsTheme} />}
+            </Win95Window>
           </div>
-          <div style={{ borderRight: `1px solid ${dsTheme.bevelDark}`, paddingRight: '12px' }}>
-            {activePanel ? `${panelConfigs[activePanel].icon} ${panelConfigs[activePanel].title}` : 'Ready'}
-          </div>
-        </div>
+        )}
+
+        {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} dsTheme={dsTheme} />}
       </div>
 
       {/* Taskbar */}
       <div style={{
-        height: '30px',
+        height: '32px', flexShrink: 0,
         background: dsTheme.surfaceSolid,
+        border: '2px solid', borderColor: bevel,
         display: 'flex', alignItems: 'center',
         paddingLeft: '4px', paddingRight: '8px', gap: '4px',
-        flexShrink: 0,
-        margin: '0 8px 8px',
-        border: '2px solid', borderColor: bevel,
         transition: 'background 1.5s, border-color 1.5s',
       }}>
-        {/* Start button */}
+        {/* Brand */}
         <button style={{
-          height: '22px', padding: '0 10px',
-          background: dsTheme.chromeLight,
-          border: '2px solid', borderColor: bevel,
-          cursor: 'pointer', fontSize: '10px',
-          fontFamily: '"Space Mono", monospace',
-          display: 'flex', alignItems: 'center', gap: '4px',
-          fontWeight: 'bold', color: dsTheme.text,
+          ...taskBtnBase,
+          background: dsTheme.titleBar,
+          borderColor: bevel,
+          color: dsTheme.titleText,
+          fontWeight: 700,
+          letterSpacing: '0.03em',
         }}>
-          🪟 Start
+          🏠 Room
         </button>
 
-        <div style={{ width: '1px', height: '18px', background: dsTheme.bevelDark, margin: '0 2px' }} />
+        <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
 
-        {/* Active window button */}
-        {activePanel && (
-          <button onClick={closePanel} style={{
-            height: '22px', padding: '0 10px',
-            background: dsTheme.glass,
-            border: '2px solid', borderColor: bevelIn,
-            cursor: 'pointer',
-            fontFamily: '"Space Mono", monospace',
-            fontSize: '10px', color: dsTheme.text,
-          }}>
-            {panelConfigs[activePanel].icon} {panelConfigs[activePanel].title}
+        {/* Panel buttons */}
+        {PANEL_KEYS.map(key => (
+          <button
+            key={key}
+            onClick={() => togglePanel(key)}
+            style={{
+              ...taskBtnBase,
+              background: activePanel === key ? dsTheme.glass : dsTheme.chromeLight,
+              borderColor: activePanel === key ? bevelIn : bevel,
+            }}
+          >
+            {PANELS[key].icon} {PANELS[key].title}
           </button>
-        )}
+        ))}
 
         <div style={{ flex: 1 }} />
 
-        {/* Chat button */}
-        <button onClick={() => setChatOpen(o => !o)} style={{
-          height: '22px', padding: '0 10px',
-          background: chatOpen ? dsTheme.glass : dsTheme.chromeLight,
-          border: '2px solid',
-          borderColor: chatOpen ? bevelIn : bevel,
-          cursor: 'pointer',
-          fontFamily: '"Space Mono", monospace',
-          fontSize: '10px', color: dsTheme.text,
-          display: 'flex', alignItems: 'center', gap: '4px',
-        }}>
+        {/* Chat */}
+        <button
+          onClick={() => setChatOpen(o => !o)}
+          style={{
+            ...taskBtnBase,
+            background: chatOpen ? dsTheme.glass : dsTheme.chromeLight,
+            borderColor: chatOpen ? bevelIn : bevel,
+          }}
+        >
           💬 Chat
         </button>
 
-        <div style={{ width: '1px', height: '18px', background: dsTheme.bevelDark, margin: '0 2px' }} />
+        <div style={{ width: '1px', height: '20px', background: dsTheme.bevelDark, margin: '0 2px' }} />
 
         {/* Clock */}
         <div style={{
-          padding: '0 8px',
+          padding: '0 8px', height: '22px',
           border: '1px solid', borderColor: bevelIn,
-          height: '20px',
           display: 'flex', alignItems: 'center',
-          fontSize: '10px',
-          fontFamily: '"Space Mono", monospace',
-          color: dsTheme.text,
+          fontSize: '10px', fontFamily: '"Space Mono", monospace',
+          color: dsTheme.text, gap: '4px',
         }}>
-          {theme.icon} {currentHour}:{new Date().getMinutes().toString().padStart(2, '0')}
+          {theme.icon} {clockStr}
         </div>
       </div>
-
-      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} dsTheme={dsTheme} />}
     </div>
   );
 }
