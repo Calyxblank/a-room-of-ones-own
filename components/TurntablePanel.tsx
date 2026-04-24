@@ -11,7 +11,7 @@ function getUsername(): string {
   return localStorage.getItem('room-username') ?? 'Guest';
 }
 
-export default function TurntablePanel({ dsTheme }: { dsTheme: DSTheme }) {
+export default function TurntablePanel({ dsTheme, roomId }: { dsTheme: DSTheme; roomId: string }) {
   const [playlists, setPlaylists] = useState<SharedPlaylist[]>([]);
   const [active, setActive] = useState<SharedPlaylist | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -21,7 +21,7 @@ export default function TurntablePanel({ dsTheme }: { dsTheme: DSTheme }) {
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    const es = new EventSource('/api/playlist');
+    const es = new EventSource(`/api/playlist?room=${roomId}`);
     es.onmessage = (e) => {
       const data = JSON.parse(e.data) as {
         type: string;
@@ -51,7 +51,7 @@ export default function TurntablePanel({ dsTheme }: { dsTheme: DSTheme }) {
     setAddError('');
     setAdding(true);
     try {
-      const res = await fetch('/api/playlist', {
+      const res = await fetch(`/api/playlist?room=${roomId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,7 +73,7 @@ export default function TurntablePanel({ dsTheme }: { dsTheme: DSTheme }) {
   }, [urlInput, titleInput]);
 
   const remove = useCallback(async (id: string) => {
-    await fetch('/api/playlist', {
+    await fetch(`/api/playlist?room=${roomId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),

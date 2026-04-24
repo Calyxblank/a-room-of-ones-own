@@ -8,6 +8,7 @@ interface RoomProps {
   theme: TimeTheme;
   timeOfDay: TimeOfDay;
   dsTheme: DSTheme;
+  roomId: string;
   onOpen: (panel: ActivePanel) => void;
   reduceAnimations: boolean;
 }
@@ -41,7 +42,7 @@ function compressImage(dataUrl: string, maxPx = 400): Promise<string> {
   });
 }
 
-export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: RoomProps) {
+export default function Room({ timeOfDay, dsTheme, roomId, onOpen, reduceAnimations }: RoomProps) {
   const isMobile = useIsMobile();
   const [photos, setPhotos] = useState<Record<number, RoomPhoto>>({});
   const fileRefs = [
@@ -52,7 +53,7 @@ export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: R
 
   useEffect(() => {
     const load = () =>
-      fetch('/api/photos').then(r => r.json()).then(d => setPhotos(d.photos ?? {})).catch(() => {});
+      fetch(`/api/photos?room=${roomId}`).then(r => r.json()).then(d => setPhotos(d.photos ?? {})).catch(() => {});
     load();
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
@@ -62,7 +63,7 @@ export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: R
     const reader = new FileReader();
     reader.onload = async (e) => {
       const compressed = await compressImage(e.target?.result as string);
-      const res = await fetch('/api/photos', {
+      const res = await fetch(`/api/photos?room=${roomId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frame, dataUrl: compressed }),
@@ -73,7 +74,7 @@ export default function Room({ timeOfDay, dsTheme, onOpen, reduceAnimations }: R
   };
 
   const removePhoto = async (frame: number) => {
-    await fetch('/api/photos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frame }) });
+    await fetch(`/api/photos?room=${roomId}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frame }) });
     setPhotos(prev => { const next = { ...prev }; delete next[frame]; return next; });
   };
 

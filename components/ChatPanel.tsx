@@ -19,7 +19,7 @@ function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; dsTheme: DSTheme }) {
+export default function ChatPanel({ onClose, dsTheme, roomId }: { onClose: () => void; dsTheme: DSTheme; roomId: string }) {
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -32,7 +32,7 @@ export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; d
   useEffect(() => { setUsername(getOrCreateUsername()); }, []);
 
   useEffect(() => {
-    const es = new EventSource('/api/chat');
+    const es = new EventSource(`/api/chat?room=${roomId}`);
     es.onopen = () => setOnline(true);
     es.onerror = () => setOnline(false);
     es.onmessage = (e) => {
@@ -49,7 +49,7 @@ export default function ChatPanel({ onClose, dsTheme }: { onClose: () => void; d
     const text = input.trim();
     if (!text) return;
     setInput('');
-    await fetch('/api/chat', {
+    await fetch(`/api/chat?room=${roomId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, user: username }),

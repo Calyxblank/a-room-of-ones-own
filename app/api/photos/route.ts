@@ -10,16 +10,28 @@ export interface RoomPhoto {
   uploadedAt: number;
 }
 
-const photos = new Map<number, RoomPhoto>();
+const rooms = new Map<string, Map<number, RoomPhoto>>();
 
-export async function GET() {
+function getRoom(roomId: string): Map<number, RoomPhoto> {
+  if (!rooms.has(roomId)) {
+    rooms.set(roomId, new Map());
+  }
+  return rooms.get(roomId)!;
+}
+
+export async function GET(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const photos = getRoom(roomId);
   const result: Record<number, RoomPhoto> = {};
   photos.forEach((v, k) => { result[k] = v; });
   return Response.json({ photos: result });
 }
 
 export async function POST(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const photos = getRoom(roomId);
   const body = await req.json();
+
   const frame = Number(body.frame);
   const dataUrl = String(body.dataUrl ?? '');
 
@@ -38,6 +50,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const roomId = req.nextUrl.searchParams.get('room') ?? 'default';
+  const photos = getRoom(roomId);
   const { frame } = await req.json();
   photos.delete(Number(frame));
   return Response.json({ ok: true });
